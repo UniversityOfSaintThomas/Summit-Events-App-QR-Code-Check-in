@@ -1,0 +1,89 @@
+minimum_cumulusci_version: '4.6.0'
+project:
+  name: Summit-Evetns-App-Checkin
+  package:
+    name: Summit-Evetns-App-Checkin
+    api_version: '63.0'
+  dependencies:
+    - github: 'https://github.com/SFDO-Community/Summit-Events-App.git'
+  git:
+    default_branch: 'main'
+  source_format: sfdx
+
+sources:
+  sea:
+    github: 'https://github.com/SFDO-Community/Summit-Events-App'
+
+tasks:
+  robot:
+    options:
+      suites: robot/Summit-Evetns-App-Checkin/tests
+      options:
+        outputdir: robot/Summit-Evetns-App-Checkin/results
+
+  robot_testdoc:
+    options:
+      path: robot/Summit-Evetns-App-Checkin/tests
+      output: robot/Summit-Evetns-App-Checkin/doc/Summit-Evetns-App-Checkin_tests.html
+
+  run_tests:
+    options:
+      required_org_code_coverage_percent: 75
+
+  check_namespace_box:
+    description: "Check the namespace box in the org"
+    class_path: cumulusci.tasks.apex.anon.AnonymousApexTask
+    options:
+      apex: >
+        summit__Summit_Events_Settings__c eventSettings = summit__Summit_Events_Settings__c.getOrgDefaults();
+        eventSettings.summit__Managed_Package__c = true;
+        upsert eventSettings;
+
+  create_fake_school_data:
+    description: Makes fake account data to mimic schools with Educaiton as industry
+    class_path: cumulusci.tasks.bulkdata.snowfakery.Snowfakery
+    options:
+      recipe: datasets/snowfackery/school_recipe.yml
+
+  deploy_custom_guest_permission_set:
+    description: Give System Admins Event Admin Permission Set
+    class_path: cumulusci.tasks.apex.anon.AnonymousApexTask
+    options:
+      namespace_inject: $project_config.project__package__namespace
+      apex: >
+        String siteName = 'Summit_Events';
+        
+        Site site = [
+                SELECT GuestUserId
+                FROM Site
+                WHERE Name = :siteName
+        ];
+        
+        List<PermissionSet> eventPermissionSets = [SELECT Name, Id FROM PermissionSet WHERE Name = 'Summit_Events_Registrant_Custom'];
+        
+        List<PermissionSetAssignment> permissionSetList = new List<PermissionSetAssignment>();
+        
+        for (PermissionSet ps : eventPermissionSets) {
+                permissionSetList.add(new PermissionSetAssignment(PermissionSetId = ps.Id, AssigneeId = site.GuestUserId));
+        }
+        if (!permissionSetList.isEmpty()) {
+            upsert permissionSetList;
+        }
+
+flows:
+  config_dev:
+    steps:
+      3:
+        task: sea:deploy_permission_set
+      4:
+        task: sea:deploy_site_config
+      5:
+        task: sea:deploy_site_settings
+      6:
+        task: sea:deploy_guest_permission_set
+      9:
+        task: sea:load_sample_data
+      10:
+        task: check_namespace_box
+      11:
+        task: deploy_custom_guest_permission_set

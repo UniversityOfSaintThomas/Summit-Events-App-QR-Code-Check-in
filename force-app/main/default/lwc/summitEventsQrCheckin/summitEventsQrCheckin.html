@@ -72,27 +72,19 @@
 
                 <!-- Camera Scan Buttons -->
                 <div class="slds-m-bottom_medium slds-text-align_center">
-                    <!-- Desktop/Browser Camera Button -->
+                    <!-- Smart Camera Button - Auto-detects device type -->
                     <lightning-button
-                        label="Scan with Device Camera"
-                        variant="neutral"
+                        label="Scan with Camera"
+                        variant="brand"
                         icon-name="utility:photo"
                         onclick={handleBrowserCameraScan}
                         disabled={isProcessing}
-                        class="camera-scan-button slds-m-right_small"
+                        class="camera-scan-button"
                     ></lightning-button>
-
-                    <!-- Mobile App Camera Button (Salesforce Mobile App Only) -->
-                    <template if:true={isMobileDevice}>
-                        <lightning-button
-                            label="Scan with Mobile Camera"
-                            variant="neutral"
-                            icon-name="utility:scan"
-                            onclick={handleScanWithCamera}
-                            disabled={isProcessing}
-                            class="camera-scan-button"
-                        ></lightning-button>
-                    </template>
+                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                        <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        Automatically uses the best camera for your device
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->

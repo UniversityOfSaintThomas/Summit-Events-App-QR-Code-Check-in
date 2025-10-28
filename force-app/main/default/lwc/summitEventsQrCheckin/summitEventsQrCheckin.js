@@ -127,6 +127,17 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
+        // Auto-detect device and use appropriate scanner
+        const isSalesforceMobile = this.myScanner != null && this.myScanner.isAvailable();
+
+        if (isSalesforceMobile) {
+            // On Salesforce Mobile App - use native scanner
+            console.log('Detected Salesforce Mobile App - using native scanner');
+            this.handleScanWithCamera();
+            return;
+        }
+
+        // On desktop/browser - use jsQR camera
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             this.showToast(
                 'Camera Not Supported',

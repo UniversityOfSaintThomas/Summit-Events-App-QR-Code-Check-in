@@ -1,0 +1,217 @@
+<template>
+    <lightning-card title={title} icon-name="standard:event">
+        <div class="slds-card__body slds-card__body_inner">
+
+            <!-- Session Not Started View -->
+            <template if:true={showSessionControls}>
+                <div class="slds-text-align_center slds-m-vertical_large">
+                    <lightning-icon icon-name="utility:scan" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">Ready to Check In Registrants</h2>
+                    <p class="slds-text-body_regular slds-text-color_weak slds-m-bottom_medium">
+                        Start a scanning session to begin checking in attendees for your event.
+                    </p>
+                    <lightning-button
+                        label="Start Scanning Session"
+                        variant="brand"
+                        onclick={handleStartSession}
+                        icon-name="utility:play"
+                        class="session-start-button"
+                    ></lightning-button>
+                </div>
+            </template>
+
+            <!-- Active Session View -->
+            <template if:true={showActiveSessionControls}>
+                <!-- Session Status Bar -->
+                <div class="session-status-bar slds-m-bottom_medium">
+                    <div class="slds-grid slds-grid_align-spread">
+                        <div class="slds-col">
+                            <span class="status-indicator">
+                                <span class="status-dot active"></span>
+                                <span class="slds-text-body_small">Session Active</span>
+                            </span>
+                        </div>
+                        <div class="slds-col slds-text-align_right">
+                            <span class="slds-text-body_small slds-text-color_weak">
+                                Duration: {sessionDuration}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scan Count Display -->
+                <div class="slds-m-bottom_medium slds-text-align_center">
+                    <div class="scan-counter">
+                        <lightning-icon icon-name="utility:check" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        <span class="slds-text-heading_medium">{scanCount}</span>
+                        <span class="slds-text-body_regular slds-m-left_x-small">Checked In</span>
+                    </div>
+                </div>
+
+                <!-- QR Code Input Field -->
+                <div class="slds-m-bottom_medium">
+                    <lightning-input
+                        label="Scan or Enter QR Code"
+                        placeholder="Scan QR code or enter manually..."
+                        value={qrCodeInput}
+                        onchange={handleQrCodeChange}
+                        onkeypress={handleQrCodeKeyPress}
+                        disabled={isProcessing}
+                        class="qr-input"
+                    ></lightning-input>
+                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                        <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        <template if:true={isMobileDevice}>
+                            Tap the camera button below, use a USB scanner, or type the QR code and press Enter
+                        </template>
+                        <template if:false={isMobileDevice}>
+                            Use a barcode scanner or type the QR code and press Enter
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Camera Scan Buttons -->
+                <div class="slds-m-bottom_medium slds-text-align_center">
+                    <!-- Desktop/Browser Camera Button -->
+                    <lightning-button
+                        label="Scan with Device Camera"
+                        variant="neutral"
+                        icon-name="utility:photo"
+                        onclick={handleBrowserCameraScan}
+                        disabled={isProcessing}
+                        class="camera-scan-button slds-m-right_small"
+                    ></lightning-button>
+
+                    <!-- Mobile App Camera Button (Salesforce Mobile App Only) -->
+                    <template if:true={isMobileDevice}>
+                        <lightning-button
+                            label="Scan with Mobile Camera"
+                            variant="neutral"
+                            icon-name="utility:scan"
+                            onclick={handleScanWithCamera}
+                            disabled={isProcessing}
+                            class="camera-scan-button"
+                        ></lightning-button>
+                    </template>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-button
+                            label="Check In"
+                            variant="brand"
+                            onclick={handleCheckIn}
+                            disabled={isProcessing}
+                        ></lightning-button>
+                    </div>
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-button
+                            label="Clear"
+                            variant="neutral"
+                            onclick={handleClearInput}
+                            disabled={isProcessing}
+                        ></lightning-button>
+                    </div>
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-button-menu
+                            alternative-text="Session options"
+                            icon-size="x-small"
+                            menu-alignment="right"
+                            variant="border-filled"
+                            label="Session"
+                        >
+                            <lightning-menu-item
+                                value="reset"
+                                label="Reset Counter"
+                                icon-name="utility:refresh"
+                                onclick={handleResetSession}
+                            ></lightning-menu-item>
+                            <lightning-menu-item
+                                value="stop"
+                                label="End Session"
+                                icon-name="utility:stop"
+                                onclick={handleStopSession}
+                            ></lightning-menu-item>
+                        </lightning-button-menu>
+                    </div>
+                </div>
+
+                <!-- Processing Spinner -->
+                <template if:true={isProcessing}>
+                    <div class="slds-m-vertical_medium slds-text-align_center">
+                        <lightning-spinner alternative-text="Processing..." size="small"></lightning-spinner>
+                        <p class="slds-m-top_small">Processing check-in...</p>
+                    </div>
+                </template>
+
+                <!-- Result Card -->
+                <template if:true={hasResults}>
+                    <div class={resultCardClass}>
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <div class="slds-col slds-size_1-of-12">
+                                <lightning-icon
+                                    icon-name={resultIcon}
+                                    size="medium"
+                                ></lightning-icon>
+                            </div>
+                            <div class="slds-col slds-size_11-of-12">
+                                <div class="slds-text-heading_small slds-m-bottom_x-small">
+                                    {lastCheckinResult.message}
+                                </div>
+                                <template if:true={lastCheckinResult.registrantName}>
+                                    <div class="slds-text-body_regular">
+                                        <strong>Name:</strong> {lastCheckinResult.registrantName}
+                                    </div>
+                                </template>
+                                <template if:true={lastCheckinResult.eventName}>
+                                    <div class="slds-text-body_small">
+                                        <strong>Event:</strong> {lastCheckinResult.eventName}
+                                    </div>
+                                </template>
+                                <template if:true={lastCheckinResult.instanceTitle}>
+                                    <div class="slds-text-body_small">
+                                        <strong>Instance:</strong> {lastCheckinResult.instanceTitle}
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Camera Scanner Modal -->
+                <template if:true={showCameraScanner}>
+                    <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                        <div class="slds-modal__container">
+                            <header class="slds-modal__header">
+                                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                        title="Close" onclick={handleCloseCameraScanner}>
+                                    <lightning-icon icon-name="utility:close" size="small" alternative-text="close"></lightning-icon>
+                                    <span class="slds-assistive-text">Close</span>
+                                </button>
+                                <h2 class="slds-text-heading_medium">Scan QR Code</h2>
+                            </header>
+                            <div class="slds-modal__content slds-p-around_medium" id="modal-content">
+                                <div class="camera-container">
+                                    <video lwc:ref="videoElement" autoplay playsinline class="camera-video"></video>
+                                    <canvas lwc:ref="canvasElement" class="camera-canvas"></canvas>
+                                </div>
+                                <p class="slds-text-align_center slds-m-top_medium">
+                                    Position the QR code within the camera view
+                                </p>
+                            </div>
+                            <footer class="slds-modal__footer">
+                                <lightning-button
+                                    label="Cancel"
+                                    onclick={handleCloseCameraScanner}
+                                ></lightning-button>
+                            </footer>
+                        </div>
+                    </section>
+                    <div class="slds-backdrop slds-backdrop_open"></div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>
+

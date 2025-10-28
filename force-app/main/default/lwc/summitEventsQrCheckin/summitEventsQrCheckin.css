@@ -1,0 +1,138 @@
+.scan-counter {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #f3f3f3;
+    border-radius: 0.25rem;
+}
+
+.qr-input {
+    font-size: 1.2rem;
+}
+
+.result-card {
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-top: 1rem;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease-in-out;
+}
+
+.success-card {
+    background-color: #d9f0d9;
+    border-color: #2e844a;
+}
+
+.warning-card {
+    background-color: #fef3cd;
+    border-color: #ffb75d;
+}
+
+.error-card {
+    background-color: #fedad8;
+    border-color: #ea001e;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Make input more prominent for scanning */
+.qr-input input {
+    font-size: 1.1rem !important;
+    font-weight: 500;
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 768px) {
+    .scan-counter {
+        font-size: 0.9rem;
+    }
+}
+
+/* Session management styles */
+.session-start-button {
+    min-width: 200px;
+}
+
+.camera-scan-button {
+    min-width: 180px;
+    font-weight: 600;
+}
+
+.session-status-bar {
+    padding: 0.75rem 1rem;
+    background-color: #f3f3f3;
+    border-radius: 0.25rem;
+    border-left: 4px solid #2e844a;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.active {
+    background-color: #2e844a;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Camera scanner styles */
+.camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    background: #000;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.camera-video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.camera-canvas {
+    display: none;
+}
+
+.slds-modal__container {
+    max-width: 90%;
+    width: 700px;
+}
+
+@media (max-width: 768px) {
+    .camera-container {
+        max-width: 100%;
+    }
+
+    .slds-modal__container {
+        max-width: 95%;
+    }
+}

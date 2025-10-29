@@ -3,7 +3,11 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getBarcodeScanner } from 'lightning/mobileCapabilities';
 import { loadScript } from 'lightning/platformResourceLoader';
 import jsQR from '@salesforce/resourceUrl/jsQR';
+import lookupRegistrant from '@salesforce/apex/summitEventsCheckin.lookupRegistrant';
 import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegistrant';
+import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
+import checkInRegistrantById from '@salesforce/apex/summitEventsCheckin.checkInRegistrantById';
+import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
 
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
@@ -11,10 +15,30 @@ export default class SummitEventsQrCheckin extends LightningElement {
     @track isProcessing = false;
     @track lastCheckinResult = null;
     @track showResult = false;
+    @track pendingCheckin = null; // Holds registration awaiting check-in confirmation
     @track scanCount = 0;
     @track sessionActive = false;
     @track sessionStartTime = null;
     @track showCameraScanner = false;
+
+    // Event instance selection properties
+    @track selectedDate = '';
+    @track selectedInstanceId = '';
+    @track instanceOptions = [];
+    @track loadingInstances = false;
+    @track noInstancesFound = false;
+
+    // Manual lookup properties (now inline)
+    @track firstName = '';
+    @track lastName = '';
+    @track searchResults = [];
+    @track isSearching = false;
+    @track selectedRegistration = null;
+    @track searchPerformed = false;
+
+    // Pagination properties
+    @track currentPage = 1;
+    pageSize = 5;
 
     myScanner;
     scanButtonDisabled = false;
@@ -49,26 +73,69 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
     }
 
+    async handleDateChange(event) {
+        this.selectedDate = event.target.value;
+        this.selectedInstanceId = '';
+        this.instanceOptions = [];
+        this.noInstancesFound = false;
+
+        if (!this.selectedDate) {
+            return;
+        }
+
+        this.loadingInstances = true;
+
+        try {
+            const instances = await getEventInstancesByDate({ selectedDate: this.selectedDate });
+
+            if (instances && instances.length > 0) {
+                this.instanceOptions = instances.map(inst => ({
+                    label: inst.label,
+                    value: inst.value
+                }));
+                this.noInstancesFound = false;
+            } else {
+                this.instanceOptions = [];
+                this.noInstancesFound = true;
+            }
+        } catch (error) {
+            console.error('Error loading event instances:', error);
+            this.showToast('Error', 'Failed to load event instances. Please try again.', 'error');
+            this.instanceOptions = [];
+            this.noInstancesFound = true;
+        } finally {
+            this.loadingInstances = false;
+        }
+    }
+
+    handleInstanceChange(event) {
+        this.selectedInstanceId = event.target.value;
+    }
+
     handleQrCodeChange(event) {
         this.qrCodeInput = event.target.value;
     }
 
     handleStartSession() {
+        if (!this.selectedInstanceId) {
+            this.showToast('Instance Required', 'Please select an event instance before starting the session.', 'warning');
+            return;
+        }
+
         this.sessionActive = true;
         this.sessionStartTime = new Date();
         this.scanCount = 0;
         this.showResult = false;
         this.lastCheckinResult = null;
+        this.pendingCheckin = null;
         this.qrCodeInput = '';
+        this.firstName = '';
+        this.lastName = '';
+        this.searchResults = [];
+        this.searchPerformed = false;
+        this.currentPage = 1;
 
         this.showToast('Session Started', 'Scanning session is now active. Ready to check in registrants.', 'success');
-
-        setTimeout(() => {
-            const inputField = this.template.querySelector('lightning-input');
-            if (inputField) {
-                inputField.focus();
-            }
-        }, 100);
     }
 
     handleScanWithCamera() {
@@ -252,17 +319,16 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.scanCount = 0;
         this.showResult = false;
         this.lastCheckinResult = null;
+        this.pendingCheckin = null;
         this.qrCodeInput = '';
+        this.firstName = '';
+        this.lastName = '';
+        this.searchResults = [];
+        this.searchPerformed = false;
+        this.currentPage = 1;
         this.sessionStartTime = new Date();
 
         this.showToast('Session Reset', 'Counter has been reset. Session continues.', 'info');
-
-        setTimeout(() => {
-            const inputField = this.template.querySelector('lightning-input');
-            if (inputField) {
-                inputField.focus();
-            }
-        }, 100);
     }
 
     getSessionDuration() {
@@ -304,27 +370,25 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         this.isProcessing = true;
         this.showResult = false;
+        this.pendingCheckin = null;
 
         try {
-            const result = await checkInRegistrant({ qrCodeValue: this.qrCodeInput.trim() });
-
-            this.lastCheckinResult = result;
-            this.showResult = true;
+            // Lookup registration without checking in
+            const result = await lookupRegistrant({
+                qrCodeValue: this.qrCodeInput.trim(),
+                instanceId: this.selectedInstanceId
+            });
 
             if (result.success) {
-                this.scanCount++;
+                // Store pending registration for confirmation
+                this.pendingCheckin = result;
+                this.showResult = true;
 
                 if (result.alreadyCheckedIn) {
                     this.showToast(
                         'Already Checked In',
                         `${result.registrantName} was already checked in.`,
-                        'warning'
-                    );
-                } else {
-                    this.showToast(
-                        'Success!',
-                        `${result.registrantName} has been checked in successfully.`,
-                        'success'
+                        'info'
                     );
                 }
             } else {
@@ -333,10 +397,45 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
             this.qrCodeInput = '';
 
-            const inputField = this.template.querySelector('lightning-input');
-            if (inputField) {
-                inputField.focus();
+        } catch (error) {
+            console.error('Error during lookup:', error);
+            this.showToast(
+                'Error',
+                'An unexpected error occurred. Please try again.',
+                'error'
+            );
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    async handleConfirmCheckIn() {
+        if (!this.pendingCheckin) {
+            return;
+        }
+
+        this.isProcessing = true;
+
+        try {
+            const result = await checkInRegistrant({
+                qrCodeValue: this.pendingCheckin.registrationId,
+                instanceId: this.selectedInstanceId
+            });
+
+            this.lastCheckinResult = result;
+
+            if (result.success && !result.alreadyCheckedIn) {
+                this.scanCount++;
+                this.showToast(
+                    'Success!',
+                    `${result.registrantName} has been checked in successfully.`,
+                    'success'
+                );
             }
+
+            // Clear pending check-in
+            this.pendingCheckin = null;
+            this.showResult = false;
 
         } catch (error) {
             console.error('Error during check-in:', error);
@@ -348,6 +447,12 @@ export default class SummitEventsQrCheckin extends LightningElement {
         } finally {
             this.isProcessing = false;
         }
+    }
+
+    handleCancelCheckIn() {
+        this.pendingCheckin = null;
+        this.showResult = false;
+        this.lastCheckinResult = null;
     }
 
     handleClearInput() {
@@ -369,6 +474,165 @@ export default class SummitEventsQrCheckin extends LightningElement {
             mode: variant === 'error' ? 'sticky' : 'dismissable'
         });
         this.dispatchEvent(event);
+    }
+
+    // Manual Lookup Methods (Inline)
+    handleFirstNameChange(event) {
+        this.firstName = event.target.value;
+    }
+
+    handleLastNameChange(event) {
+        this.lastName = event.target.value;
+    }
+
+    async handleSearchRegistrations() {
+        if (!this.sessionActive) {
+            this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
+            return;
+        }
+
+        if ((!this.firstName || this.firstName.trim() === '') && (!this.lastName || this.lastName.trim() === '')) {
+            this.showToast('Search Required', 'Please enter at least first name or last name', 'warning');
+            return;
+        }
+
+        this.isSearching = true;
+        this.searchResults = [];
+        this.selectedRegistration = null;
+        this.searchPerformed = false;
+        this.currentPage = 1;
+
+        try {
+            const results = await searchRegistrations({
+                firstName: this.firstName,
+                lastName: this.lastName,
+                instanceId: this.selectedInstanceId
+            });
+
+            this.searchResults = results;
+            this.searchPerformed = true;
+
+            if (results.length === 0) {
+                this.showToast('No Results', 'No registrations found matching your search', 'info');
+            }
+
+        } catch (error) {
+            console.error('Error searching registrations:', error);
+            this.showToast('Search Error', 'An error occurred while searching. Please try again.', 'error');
+        } finally {
+            this.isSearching = false;
+        }
+    }
+
+    handlePreviousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+        }
+    }
+
+    handleNextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+        }
+    }
+
+    async handleSelectRegistration(event) {
+        const registrationId = event.currentTarget.dataset.id;
+        const registration = this.searchResults.find(r => r.registrationId === registrationId);
+
+        if (!registration) return;
+
+        this.isProcessing = true;
+
+        try {
+            // Lookup registration to show pending check-in
+            const result = await lookupRegistrant({
+                qrCodeValue: registration.registrationId,
+                instanceId: this.selectedInstanceId
+            });
+
+            if (result.success) {
+                // Store pending registration for confirmation
+                this.pendingCheckin = result;
+                this.showResult = true;
+
+                // Clear search results to show confirmation card
+                this.searchResults = [];
+                this.firstName = '';
+                this.lastName = '';
+                this.searchPerformed = false;
+                this.currentPage = 1;
+
+                if (result.alreadyCheckedIn) {
+                    this.showToast(
+                        'Already Checked In',
+                        `${result.registrantName} was already checked in.`,
+                        'info'
+                    );
+                }
+            } else {
+                this.showToast('Error', result.message, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error during lookup:', error);
+            this.showToast(
+                'Error',
+                'An unexpected error occurred. Please try again.',
+                'error'
+            );
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    get hasSearchResults() {
+        return this.searchResults && this.searchResults.length > 0;
+    }
+
+    get showNoResults() {
+        return this.searchPerformed && this.searchResults.length === 0;
+    }
+
+    get isSearchingOrProcessing() {
+        return this.isSearching || this.isProcessing;
+    }
+
+    // Pagination getters
+    get paginatedResults() {
+        const startIndex = (this.currentPage - 1) * this.pageSize;
+        const endIndex = startIndex + this.pageSize;
+        return this.searchResults.slice(startIndex, endIndex);
+    }
+
+    get totalPages() {
+        return Math.ceil(this.searchResults.length / this.pageSize);
+    }
+
+    get showPagination() {
+        return this.hasSearchResults && this.totalPages > 1;
+    }
+
+    get hasPreviousPage() {
+        return this.currentPage > 1;
+    }
+
+    get hasNextPage() {
+        return this.currentPage < this.totalPages;
+    }
+
+    get isOnFirstPage() {
+        return this.currentPage === 1;
+    }
+
+    get isOnLastPage() {
+        return this.currentPage === this.totalPages;
+    }
+
+    get pageInfo() {
+        const start = (this.currentPage - 1) * this.pageSize + 1;
+        const end = Math.min(this.currentPage * this.pageSize, this.searchResults.length);
+        return `${start}-${end} of ${this.searchResults.length}`;
     }
 
     get resultCardClass() {
@@ -395,6 +659,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
     }
 
+    get hasPendingCheckin() {
+        return this.showResult && this.pendingCheckin !== null;
+    }
+
+    get hasCompletedCheckin() {
+        return this.lastCheckinResult !== null && this.pendingCheckin === null;
+    }
+
     get hasResults() {
         return this.showResult && this.lastCheckinResult;
     }
@@ -413,6 +685,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     get isMobileDevice() {
         return !this.scanButtonDisabled;
+    }
+
+    get showInstancePicker() {
+        return !this.loadingInstances && this.instanceOptions.length > 0;
+    }
+
+    get isStartButtonDisabled() {
+        return !this.selectedInstanceId || this.selectedInstanceId === '';
     }
 }
 

@@ -6,7 +6,7 @@ Lightning Web Component for checking in event registrants using QR codes.
 
 - **Smart Camera Scanning** - Auto-detects device and uses appropriate camera (Desktop, Mobile App, or Browser)
 - **USB Scanner Support** - Works with standard barcode scanners
-- **Manual Entry** - Type QR codes directly
+- **Manual Registration Lookup** - Search for registrations by first and last name
 - **Session Management** - Track check-ins with counters and timers
 - **Real-time Feedback** - Visual confirmation of check-in status
 
@@ -26,8 +26,17 @@ Lightning Web Component for checking in event registrants using QR codes.
 
 ### USB Scanner Users
 1. Click "Start Scanning Session"
-2. Scan QR code with USB scanner
-3. Check-in processes automatically
+2. Click in the input field
+3. Scan QR code with USB scanner
+4. Check-in processes automatically
+
+### Manual Lookup
+1. Click "Start Scanning Session"
+2. Click "Manual Lookup"
+3. Enter first and/or last name
+4. Click "Search"
+5. Select the registration from results
+6. Click "Check In Selected"
 
 ## Installation
 

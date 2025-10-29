@@ -136,3 +136,24 @@
         max-width: 95%;
     }
 }
+
+/* Manual Lookup Styles */
+.search-results-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.slds-tile {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.slds-tile:hover {
+    background-color: #f3f3f3;
+}
+
+.slds-modal_large .slds-modal__container {
+    max-width: 90%;
+    width: 900px;
+}
+

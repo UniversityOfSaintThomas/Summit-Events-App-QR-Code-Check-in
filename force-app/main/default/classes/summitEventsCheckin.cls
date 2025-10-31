@@ -18,10 +18,10 @@ public with sharing class summitEventsCheckin {
             }
 
             Integer count = [
-                SELECT COUNT()
-                FROM summit__Summit_Events_Registration__c
-                WHERE summit__Event_Instance__c = :instanceId
-                  AND summit__Status__c = 'Attended'
+                    SELECT COUNT()
+                    FROM summit__Summit_Events_Registration__c
+                    WHERE summit__Event_Instance__c = :instanceId
+                    AND summit__Status__c = 'Attended'
             ];
 
             return count;
@@ -103,7 +103,9 @@ public with sharing class summitEventsCheckin {
                             summit__Registrant_First_Name__c,
                             summit__Registrant_Last_Name__c,
                             summit__Event__r.Name,
-                            summit__Event_Instance__r.summit__Instance_Title__c
+                            summit__Event_Instance__r.summit__Instance_Title__c,
+                            summit__Event_Instance__r.summit__Instance_Start_Date__c,
+                            summit__Event_Instance__r.summit__Instance_Start_Time__c
                     FROM summit__Summit_Events_Registration__c
                     WHERE Id = :qrCodeValue
                     AND summit__Event_Instance__c = :instanceId
@@ -127,6 +129,8 @@ public with sharing class summitEventsCheckin {
                 result.registrantName = getFullName(registration);
                 result.eventName = registration.summit__Event__r.Name;
                 result.instanceTitle = registration.summit__Event_Instance__r.summit__Instance_Title__c;
+                result.instanceStartDate = registration.summit__Event_Instance__r.summit__Instance_Start_Date__c;
+                result.instanceStartTime = registration.summit__Event_Instance__r.summit__Instance_Start_Time__c;
                 return result;
             }
 
@@ -138,6 +142,8 @@ public with sharing class summitEventsCheckin {
             result.registrantName = getFullName(registration);
             result.eventName = registration.summit__Event__r.Name;
             result.instanceTitle = registration.summit__Event_Instance__r.summit__Instance_Title__c;
+            result.instanceStartDate = registration.summit__Event_Instance__r.summit__Instance_Start_Date__c;
+            result.instanceStartTime = registration.summit__Event_Instance__r.summit__Instance_Start_Time__c;
 
         } catch (Exception e) {
             result.success = false;
@@ -229,18 +235,19 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
-     * Search for registrations by first and last name
+     * Search for registrations by first name, last name, and/or email
      * @param firstName - First name to search for
      * @param lastName - Last name to search for
+     * @param email - Email address to search for
      * @param instanceId - The event instance ID to scope the search to
      * @return List<RegistrationSearchResult> - List of matching registrations
      */
     @AuraEnabled(Cacheable=false)
-    public static List<RegistrationSearchResult> searchRegistrations(String firstName, String lastName, String instanceId) {
+    public static List<RegistrationSearchResult> searchRegistrations(String firstName, String lastName, String email, String instanceId) {
         List<RegistrationSearchResult> results = new List<RegistrationSearchResult>();
 
         try {
-            if (String.isBlank(firstName) && String.isBlank(lastName)) {
+            if (String.isBlank(firstName) && String.isBlank(lastName) && String.isBlank(email)) {
                 return results;
             }
 
@@ -250,6 +257,7 @@ public with sharing class summitEventsCheckin {
 
             String firstNamePattern = String.isBlank(firstName) ? '%' : '%' + firstName + '%';
             String lastNamePattern = String.isBlank(lastName) ? '%' : '%' + lastName + '%';
+            String emailPattern = String.isBlank(email) ? '%' : '%' + email + '%';
             String fullNamePattern = '%' + firstName + ' ' + lastName + '%';
 
             // Query for matching registrations
@@ -267,15 +275,19 @@ public with sharing class summitEventsCheckin {
                             summit__Event_Instance__r.summit__Instance_Start_Date__c
                     FROM summit__Summit_Events_Registration__c
                     WHERE
-                    (
-                            (summit__Registrant_First_Name__c LIKE :firstNamePattern
-                            AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
-                            OR (summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern
-                            AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
-                            OR (summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern)
-                    )
-                    AND summit__Event_Instance__c = :instanceId
-                    AND summit__Status__c != 'Cancelled'
+                            summit__Event_Instance__c = :instanceId
+                            AND summit__Status__c != 'Cancelled'
+
+                            AND (
+                                    (summit__Registrant_First_Name__c LIKE :firstNamePattern
+                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
+
+                                    OR (summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern
+
+                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
+                                    OR summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern
+                                    OR summit__Registrant_Email__c LIKE :emailPattern
+                            )
                     ORDER BY summit__Event_Instance__r.summit__Instance_Start_Date__c DESC,
                             summit__Registrant_Last_Name__c,
                             summit__Registrant_First_Name__c
@@ -421,6 +433,8 @@ public with sharing class summitEventsCheckin {
         @AuraEnabled public String registrantName;
         @AuraEnabled public String eventName;
         @AuraEnabled public String instanceTitle;
+        @AuraEnabled public Date instanceStartDate;
+        @AuraEnabled public Time instanceStartTime;
 
         public CheckinResult() {
             this.success = false;
@@ -430,6 +444,8 @@ public with sharing class summitEventsCheckin {
             this.registrantName = '';
             this.eventName = '';
             this.instanceTitle = '';
+            this.instanceStartDate = null;
+            this.instanceStartTime = null;
         }
     }
 

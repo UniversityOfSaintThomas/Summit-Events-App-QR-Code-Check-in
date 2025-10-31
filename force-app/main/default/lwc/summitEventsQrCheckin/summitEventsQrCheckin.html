@@ -157,6 +157,18 @@
                                 ></lightning-input>
                             </div>
                         </div>
+                        <div class="slds-grid slds-gutters slds-m-bottom_small">
+                            <div class="slds-col slds-size_1-of-1">
+                                <lightning-input
+                                        label="Email"
+                                        type="email"
+                                        value={email}
+                                        onchange={handleEmailChange}
+                                        placeholder="Enter email..."
+                                        disabled={isProcessing}
+                                ></lightning-input>
+                            </div>
+                        </div>
 
                         <!-- Search Button -->
                         <lightning-button
@@ -199,7 +211,7 @@
                                              onclick={handleSelectRegistration}
                                              class="slds-box slds-box_x-small slds-m-bottom_x-small"
                                              style="cursor: pointer;">
-                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                            <div class="slds-grid slds-grid_vertical-align-top slds-text-align_left slds-text-color_default">
                                                 <div class="slds-col slds-has-flexi-truncate">
                                                     <div class="slds-text-body_regular slds-text-heading_small">
                                                         {registration.registrantName}
@@ -218,10 +230,10 @@
                                                 </div>
                                                 <div class="slds-col slds-no-flex">
                                                     <template if:true={registration.isCheckedIn}>
-                                                        <lightning-badge label="Checked In" variant="success"></lightning-badge>
+                                                        <lightning-badge label="Checked In" variant="success" icon-name="utility:check" class="badge-checked-in"></lightning-badge>
                                                     </template>
                                                     <template if:false={registration.isCheckedIn}>
-                                                        <lightning-badge label={registration.status}></lightning-badge>
+                                                        <lightning-badge label={registration.status} icon-name="utility:steps" class="badge-check-in"></lightning-badge>
                                                     </template>
                                                 </div>
                                             </div>
@@ -332,10 +344,25 @@
                                     <strong>Event:</strong> {pendingCheckin.eventName}
                                 </div>
                                 <template if:true={pendingCheckin.instanceTitle}>
-                                    <div class="slds-text-body_small">
+                                    <div class="slds-text-body_small slds-m-bottom_xx-small">
                                         <strong>Instance:</strong> {pendingCheckin.instanceTitle}
                                     </div>
                                 </template>
+                                <template if:true={pendingCheckin.instanceStartDate}>
+                                    <div class="slds-text-body_small slds-m-bottom_xx-small">
+                                        <strong>Event Date:</strong>
+                                        <lightning-formatted-date-time value={pendingCheckin.instanceStartDate} year="numeric" month="short" day="numeric"></lightning-formatted-date-time>
+                                        <template if:true={formattedEventTime}>
+                                            at {formattedEventTime}
+                                        </template>
+                                    </div>
+                                </template>
+                                <div class="slds-text-body_small slds-m-bottom_xx-small">
+                                    <a href={registrationRecordUrl} target="_blank" rel="noopener noreferrer">
+                                        View Registration Record
+                                        <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                                    </a>
+                                </div>
                                 <template if:true={pendingCheckin.alreadyCheckedIn}>
                                     <div class="slds-m-top_small">
                                         <lightning-badge label="Already Checked In" variant="warning"></lightning-badge>

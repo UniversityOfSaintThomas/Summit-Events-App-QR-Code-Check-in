@@ -149,7 +149,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('John', 'Doe', instance.Id);
+            summitEventsCheckin.searchRegistrations('John', 'Doe', '', instance.Id);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -168,7 +168,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('Jane', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('Jane', '', '', instance.Id);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -183,7 +183,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', 'Smith', instance.Id);
+            summitEventsCheckin.searchRegistrations('', 'Smith', '', instance.Id);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -198,7 +198,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('NonExistent', 'Person', instance.Id);
+            summitEventsCheckin.searchRegistrations('NonExistent', 'Person', '', instance.Id);
         Test.stopTest();
 
         System.assertEquals(0, results.size(), 'Should not find any registrations');
@@ -212,10 +212,26 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('', '', '', instance.Id);
         Test.stopTest();
 
         System.assertEquals(0, results.size(), 'Should return empty list for empty input');
+    }
+
+    @IsTest
+    static void testSearchRegistrationsByEmail() {
+        summit__Summit_Events_Instance__c instance = [
+            SELECT Id FROM summit__Summit_Events_Instance__c LIMIT 1
+        ];
+
+        Test.startTest();
+        List<summitEventsCheckin.RegistrationSearchResult> results =
+            summitEventsCheckin.searchRegistrations('', '', 'john.doe@test.com', instance.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(0, results.size(), 'Should find at least one registration');
+        System.assertEquals('John Doe', results[0].registrantName);
+        System.assertEquals('john.doe@test.com', results[0].email);
     }
 
     @IsTest

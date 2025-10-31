@@ -33,6 +33,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
     // Manual lookup properties (now inline)
     @track firstName = '';
     @track lastName = '';
+    @track email = '';
     @track searchResults = [];
     @track isSearching = false;
     @track selectedRegistration = null;
@@ -148,6 +149,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.qrCodeInput = '';
         this.firstName = '';
         this.lastName = '';
+        this.email = '';
         this.searchResults = [];
         this.searchPerformed = false;
         this.currentPage = 1;
@@ -343,6 +345,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.qrCodeInput = '';
         this.firstName = '';
         this.lastName = '';
+        this.email = '';
         this.searchResults = [];
         this.searchPerformed = false;
         this.currentPage = 1;
@@ -391,6 +394,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.isProcessing = true;
         this.showResult = false;
         this.pendingCheckin = null;
+        this.lastCheckinResult = null;
 
         try {
             // Lookup registration without checking in
@@ -507,14 +511,20 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.lastName = event.target.value;
     }
 
+    handleEmailChange(event) {
+        this.email = event.target.value;
+    }
+
     async handleSearchRegistrations() {
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
             return;
         }
 
-        if ((!this.firstName || this.firstName.trim() === '') && (!this.lastName || this.lastName.trim() === '')) {
-            this.showToast('Search Required', 'Please enter at least first name or last name', 'warning');
+        if ((!this.firstName || this.firstName.trim() === '') &&
+            (!this.lastName || this.lastName.trim() === '') &&
+            (!this.email || this.email.trim() === '')) {
+            this.showToast('Search Required', 'Please enter at least first name, last name, or email', 'warning');
             return;
         }
 
@@ -528,6 +538,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             const results = await searchRegistrations({
                 firstName: this.firstName,
                 lastName: this.lastName,
+                email: this.email,
                 instanceId: this.selectedInstanceId
             });
 
@@ -577,11 +588,13 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 // Store pending registration for confirmation
                 this.pendingCheckin = result;
                 this.showResult = true;
+                this.lastCheckinResult = null;
 
                 // Clear search results to show confirmation card
                 this.searchResults = [];
                 this.firstName = '';
                 this.lastName = '';
+                this.email = '';
                 this.searchPerformed = false;
                 this.currentPage = 1;
 
@@ -715,6 +728,30 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     get isStartButtonDisabled() {
         return !this.selectedInstanceId || this.selectedInstanceId === '';
+    }
+
+    get registrationRecordUrl() {
+        if (this.pendingCheckin && this.pendingCheckin.registrationId) {
+            return `/${this.pendingCheckin.registrationId}`;
+        }
+        return '#';
+    }
+
+    get formattedEventTime() {
+        if (this.pendingCheckin && this.pendingCheckin.instanceStartTime) {
+            // Parse the time string (format: HH:mm:ss.SSS or HH:mm:ss)
+            const timeStr = this.pendingCheckin.instanceStartTime.toString();
+            const parts = timeStr.split(':');
+            if (parts.length >= 2) {
+                let hours = parseInt(parts[0], 10);
+                const minutes = parts[1];
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 should be 12
+                return `${hours}:${minutes} ${ampm}`;
+            }
+        }
+        return '';
     }
 }
 

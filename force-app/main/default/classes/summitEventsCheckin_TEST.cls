@@ -2,7 +2,7 @@
  * Test class for summitEventsCheckin
  */
 @IsTest
-private class summitEventsCheckinTest {
+private class summitEventsCheckin_TEST {
 
     @TestSetup
     static void setup() {
@@ -57,7 +57,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.checkInRegistrant(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Check-in should be successful');
@@ -87,7 +87,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.checkInRegistrant(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Should return success');
@@ -104,7 +104,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant('001000000000000', instance.Id);
+            summitEventsCheckin.checkInRegistrant('001000000000000', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Check-in should fail');
@@ -119,7 +119,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant('', instance.Id);
+            summitEventsCheckin.checkInRegistrant('', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Check-in should fail');
@@ -134,7 +134,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant(null, instance.Id);
+            summitEventsCheckin.checkInRegistrant(null, instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Check-in should fail');
@@ -149,7 +149,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('John', 'Doe', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('John', 'Doe', '', instance.Id, null);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -168,7 +168,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('Jane', '', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('Jane', '', '', instance.Id, null);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -191,7 +191,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', 'Smith', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('', 'Smith', '', instance.Id, null);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -216,7 +216,7 @@ private class summitEventsCheckinTest {
         // Use email-specific search - should find records with wildcard name matching
         // but verify none have the nonexistent email
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', '', 'nonexistent@example.com', instance.Id);
+            summitEventsCheckin.searchRegistrations('', '', 'nonexistent@example.com', instance.Id, null);
         Test.stopTest();
 
         // The query will match records due to wildcard name matching (% on first/last name)
@@ -235,7 +235,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', '', '', instance.Id);
+            summitEventsCheckin.searchRegistrations('', '', '', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(0, results.size(), 'Should return empty list for empty input');
@@ -249,7 +249,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('', '', 'john.doe@test.com', instance.Id);
+            summitEventsCheckin.searchRegistrations('', '', 'john.doe@test.com', instance.Id, null);
         Test.stopTest();
 
         System.assertNotEquals(0, results.size(), 'Should find at least one registration');
@@ -257,82 +257,6 @@ private class summitEventsCheckinTest {
         System.assertEquals('john.doe@test.com', results[0].email);
     }
 
-    @IsTest
-    static void testCheckInRegistrantById() {
-        summit__Summit_Events_Registration__c reg = [
-            SELECT Id, summit__Event_Instance__c
-            FROM summit__Summit_Events_Registration__c
-            WHERE summit__Registrant_Email__c = 'john.doe@test.com'
-            LIMIT 1
-        ];
-
-        Test.startTest();
-        summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrantById(reg.Id, reg.summit__Event_Instance__c);
-        Test.stopTest();
-
-        System.assertEquals(true, result.success, 'Check-in should be successful');
-        System.assertEquals(false, result.alreadyCheckedIn, 'Should not be already checked in');
-        System.assertEquals('Check-in successful!', result.message);
-        System.assertEquals('John Doe', result.registrantName);
-
-        // Verify the status was updated
-        summit__Summit_Events_Registration__c updatedReg = [
-            SELECT summit__Status__c
-            FROM summit__Summit_Events_Registration__c
-            WHERE Id = :reg.Id
-        ];
-        System.assertEquals('Attended', updatedReg.summit__Status__c);
-    }
-
-    @IsTest
-    static void testCheckInRegistrantByIdAlreadyCheckedIn() {
-        summit__Summit_Events_Registration__c reg = [
-            SELECT Id, summit__Event_Instance__c
-            FROM summit__Summit_Events_Registration__c
-            WHERE summit__Registrant_Email__c = 'jane.smith@test.com'
-            LIMIT 1
-        ];
-
-        Test.startTest();
-        summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrantById(reg.Id, reg.summit__Event_Instance__c);
-        Test.stopTest();
-
-        System.assertEquals(true, result.success, 'Should return success');
-        System.assertEquals(true, result.alreadyCheckedIn, 'Should be already checked in');
-        System.assertEquals('This registrant is already checked in', result.message);
-    }
-
-    @IsTest
-    static void testCheckInRegistrantByIdInvalid() {
-        summit__Summit_Events_Instance__c instance = [
-            SELECT Id FROM summit__Summit_Events_Instance__c LIMIT 1
-        ];
-
-        Test.startTest();
-        summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrantById('001000000000000', instance.Id);
-        Test.stopTest();
-
-        System.assertEquals(false, result.success, 'Check-in should fail');
-        System.assertEquals('No registration found', result.message);
-    }
-
-    @IsTest
-    static void testCheckInRegistrantByIdEmpty() {
-        summit__Summit_Events_Instance__c instance = [
-            SELECT Id FROM summit__Summit_Events_Instance__c LIMIT 1
-        ];
-
-        Test.startTest();
-        summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrantById('', instance.Id);
-        Test.stopTest();
-
-        System.assertEquals(false, result.success, 'Check-in should fail');
-        System.assertEquals('Registration ID cannot be empty', result.message);
-    }
 
     @IsTest
     static void testGetEventInstancesByDate() {
@@ -364,12 +288,12 @@ private class summitEventsCheckinTest {
         ];
 
         // Check in the registration
-        summitEventsCheckin.checkInRegistrantById(reg.Id, reg.summit__Event_Instance__c);
+        summitEventsCheckin.checkInRegistrant(reg.Id, reg.summit__Event_Instance__c, null);
 
         Test.startTest();
         // Now undo the check-in
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.undoCheckIn(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.undoCheckIn(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Undo check-in should be successful');
@@ -396,7 +320,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.undoCheckIn(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.undoCheckIn(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Undo should fail if not checked in');
@@ -411,7 +335,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.undoCheckIn('001000000000000', instance.Id);
+            summitEventsCheckin.undoCheckIn('001000000000000', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Undo should fail with invalid ID');
@@ -426,7 +350,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.undoCheckIn('', instance.Id);
+            summitEventsCheckin.undoCheckIn('', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Undo should fail with empty ID');
@@ -476,7 +400,7 @@ private class summitEventsCheckinTest {
         Test.startTest();
         // Try to check in with wrong instance ID
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant(reg.Id, secondInstance.Id);
+            summitEventsCheckin.checkInRegistrant(reg.Id, secondInstance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Check-in should fail with wrong instance');
@@ -494,7 +418,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.checkInRegistrant(reg.Id, null);
+            summitEventsCheckin.checkInRegistrant(reg.Id, null, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Check-in should fail without instance');
@@ -508,7 +432,7 @@ private class summitEventsCheckinTest {
         ];
 
         Test.startTest();
-        Integer count = summitEventsCheckin.getTotalAttendedCount(instance.Id);
+        Integer count = summitEventsCheckin.getTotalAttendedCount(instance.Id, null);
         Test.stopTest();
 
         // Should have 1 attended registration (Jane Smith from setup)
@@ -518,7 +442,7 @@ private class summitEventsCheckinTest {
     @IsTest
     static void testGetTotalAttendedCountEmpty() {
         Test.startTest();
-        Integer count = summitEventsCheckin.getTotalAttendedCount('');
+        Integer count = summitEventsCheckin.getTotalAttendedCount('', null);
         Test.stopTest();
 
         System.assertEquals(0, count, 'Should return 0 for empty instance ID');
@@ -527,7 +451,7 @@ private class summitEventsCheckinTest {
     @IsTest
     static void testGetTotalAttendedCountNull() {
         Test.startTest();
-        Integer count = summitEventsCheckin.getTotalAttendedCount(null);
+        Integer count = summitEventsCheckin.getTotalAttendedCount(null, null);
         Test.stopTest();
 
         System.assertEquals(0, count, 'Should return 0 for null instance ID');
@@ -544,7 +468,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.lookupRegistrant(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.lookupRegistrant(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Lookup should be successful');
@@ -564,7 +488,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.lookupRegistrant(reg.Id, reg.summit__Event_Instance__c);
+            summitEventsCheckin.lookupRegistrant(reg.Id, reg.summit__Event_Instance__c, null);
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Lookup should be successful');
@@ -580,7 +504,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.lookupRegistrant('', instance.Id);
+            summitEventsCheckin.lookupRegistrant('', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Lookup should fail with empty QR code');
@@ -598,7 +522,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.lookupRegistrant(reg.Id, '');
+            summitEventsCheckin.lookupRegistrant(reg.Id, '', null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Lookup should fail with empty instance');
@@ -613,7 +537,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.lookupRegistrant('001000000000000', instance.Id);
+            summitEventsCheckin.lookupRegistrant('001000000000000', instance.Id, null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Lookup should fail with invalid registration ID');
@@ -624,7 +548,7 @@ private class summitEventsCheckinTest {
     static void testSearchRegistrationsInvalidInstance() {
         Test.startTest();
         List<summitEventsCheckin.RegistrationSearchResult> results =
-            summitEventsCheckin.searchRegistrations('John', 'Doe', '', '');
+            summitEventsCheckin.searchRegistrations('John', 'Doe', '', '', null);
         Test.stopTest();
 
         System.assertEquals(0, results.size(), 'Should return empty list for empty instance');
@@ -641,7 +565,7 @@ private class summitEventsCheckinTest {
 
         Test.startTest();
         summitEventsCheckin.CheckinResult result =
-            summitEventsCheckin.undoCheckIn(reg.Id, '');
+            summitEventsCheckin.undoCheckIn(reg.Id, '', null);
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Undo should fail with empty instance');

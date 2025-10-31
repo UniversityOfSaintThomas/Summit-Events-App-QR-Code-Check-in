@@ -8,20 +8,24 @@ public with sharing class summitEventsCheckin {
     /**
      * Get total attended count for an instance
      * @param instanceId - The event instance ID
-     * @return Integer - Count of registrations marked as Attended
+     * @param checkinStatus - The status value to count (defaults to 'Attended' if blank)
+     * @return Integer - Count of registrations marked with the specified status
      */
     @AuraEnabled(Cacheable=false)
-    public static Integer getTotalAttendedCount(String instanceId) {
+    public static Integer getTotalAttendedCount(String instanceId, String checkinStatus) {
         try {
             if (String.isBlank(instanceId)) {
                 return 0;
             }
 
+            // Default to 'Attended' if no status provided
+            String statusToCount = String.isBlank(checkinStatus) ? 'Attended' : checkinStatus;
+
             Integer count = [
                     SELECT COUNT()
                     FROM summit__Summit_Events_Registration__c
                     WHERE summit__Event_Instance__c = :instanceId
-                    AND summit__Status__c = 'Attended'
+                    AND summit__Status__c = :statusToCount
             ];
 
             return count;
@@ -76,13 +80,17 @@ public with sharing class summitEventsCheckin {
      * Lookup a registration by QR Code value without checking in
      * @param qrCodeValue - The value from the scanned QR code
      * @param instanceId - The event instance ID to scope the lookup to
+     * @param checkinStatus - The status value to check for (defaults to 'Attended' if blank)
      * @return CheckinResult - Result object containing registration details
      */
     @AuraEnabled
-    public static CheckinResult lookupRegistrant(String qrCodeValue, String instanceId) {
+    public static CheckinResult lookupRegistrant(String qrCodeValue, String instanceId, String checkinStatus) {
         CheckinResult result = new CheckinResult();
         System.debug('QR Code Value (Lookup): ' + qrCodeValue);
         System.debug('Instance ID: ' + instanceId);
+
+        // Default to 'Attended' if no status provided
+        String statusToCheck = String.isBlank(checkinStatus) ? 'Attended' : checkinStatus;
 
         try {
             if (String.isBlank(qrCodeValue)) {
@@ -120,8 +128,8 @@ public with sharing class summitEventsCheckin {
 
             summit__Summit_Events_Registration__c registration = registrations[0];
 
-            // Check if already checked in
-            if (registration.summit__Status__c == 'Attended') {
+            // Check if already checked in with the specified status
+            if (registration.summit__Status__c == statusToCheck) {
                 result.success = true;
                 result.alreadyCheckedIn = true;
                 result.message = 'This registrant is already checked in';
@@ -154,16 +162,21 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
-     * Looks up a registration by QR Code value and updates status to Attended
+     * Looks up a registration by QR Code value and updates status to specified value
      * @param qrCodeValue - The value from the scanned QR code
      * @param instanceId - The event instance ID to scope the check-in to
+     * @param checkinStatus - The status value to set (defaults to 'Attended' if blank)
      * @return CheckinResult - Result object containing success status and message
      */
     @AuraEnabled
-    public static CheckinResult checkInRegistrant(String qrCodeValue, String instanceId) {
+    public static CheckinResult checkInRegistrant(String qrCodeValue, String instanceId, String checkinStatus) {
         CheckinResult result = new CheckinResult();
         System.debug('QR Code Value: ' + qrCodeValue);
         System.debug('Instance ID: ' + instanceId);
+
+        // Default to 'Attended' if no status provided
+        String statusToSet = String.isBlank(checkinStatus) ? 'Attended' : checkinStatus;
+        System.debug('Check-in Status: ' + statusToSet);
 
         try {
             if (String.isBlank(qrCodeValue)) {
@@ -199,8 +212,8 @@ public with sharing class summitEventsCheckin {
 
             summit__Summit_Events_Registration__c registration = registrations[0];
 
-            // Check if already checked in
-            if (registration.summit__Status__c == 'Attended') {
+            // Check if already checked in with the specified status
+            if (registration.summit__Status__c == statusToSet) {
                 result.success = true;
                 result.alreadyCheckedIn = true;
                 result.message = 'This registrant is already checked in';
@@ -211,8 +224,8 @@ public with sharing class summitEventsCheckin {
                 return result;
             }
 
-            // Update status to Attended
-            registration.summit__Status__c = 'Attended';
+            // Update status to the configured value
+            registration.summit__Status__c = statusToSet;
             update registration;
 
             result.success = true;
@@ -235,16 +248,20 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
-     * Undo a check-in by reverting registration status from Attended back to Registered
+     * Undo a check-in by reverting registration status from specified checked-in status back to Registered
      * @param registrationId - The ID of the registration to undo
      * @param instanceId - The event instance ID to verify the registration belongs to this instance
+     * @param checkinStatus - The status value to check for (defaults to 'Attended' if blank)
      * @return CheckinResult - Result object containing success status and message
      */
     @AuraEnabled
-    public static CheckinResult undoCheckIn(String registrationId, String instanceId) {
+    public static CheckinResult undoCheckIn(String registrationId, String instanceId, String checkinStatus) {
         CheckinResult result = new CheckinResult();
         System.debug('Undo Check-In for Registration ID: ' + registrationId);
         System.debug('Instance ID: ' + instanceId);
+
+        // Default to 'Attended' if no status provided
+        String statusToCheck = String.isBlank(checkinStatus) ? 'Attended' : checkinStatus;
 
         try {
             if (String.isBlank(registrationId)) {
@@ -282,8 +299,8 @@ public with sharing class summitEventsCheckin {
 
             summit__Summit_Events_Registration__c registration = registrations[0];
 
-            // Check if registration is actually checked in
-            if (registration.summit__Status__c != 'Attended') {
+            // Check if registration is actually checked in with the specified status
+            if (registration.summit__Status__c != statusToCheck) {
                 result.success = false;
                 result.message = 'Registration is not checked in';
                 return result;
@@ -320,11 +337,15 @@ public with sharing class summitEventsCheckin {
      * @param lastName - Last name to search for
      * @param email - Email address to search for
      * @param instanceId - The event instance ID to scope the search to
+     * @param checkinStatus - The status value to consider as "checked in" (defaults to 'Attended' if blank)
      * @return List<RegistrationSearchResult> - List of matching registrations
      */
     @AuraEnabled(Cacheable=false)
-    public static List<RegistrationSearchResult> searchRegistrations(String firstName, String lastName, String email, String instanceId) {
+    public static List<RegistrationSearchResult> searchRegistrations(String firstName, String lastName, String email, String instanceId, String checkinStatus) {
         List<RegistrationSearchResult> results = new List<RegistrationSearchResult>();
+
+        // Default to 'Attended' if no status provided
+        String statusToCheck = String.isBlank(checkinStatus) ? 'Attended' : checkinStatus;
 
         try {
             if (String.isBlank(firstName) && String.isBlank(lastName) && String.isBlank(email)) {
@@ -335,44 +356,56 @@ public with sharing class summitEventsCheckin {
                 return results;
             }
 
-            String firstNamePattern = String.isBlank(firstName) ? '%' : '%' + firstName + '%';
-            String lastNamePattern = String.isBlank(lastName) ? '%' : '%' + lastName + '%';
-            String emailPattern = String.isBlank(email) ? '%' : '%' + email + '%';
-            String fullNamePattern = '%' + firstName + ' ' + lastName + '%';
+            // Declare pattern variables for query binding
+            String firstNamePattern = '';
+            String lastNamePattern = '';
+            String fullNamePattern = '';
 
-            // Query for matching registrations
-            List<summit__Summit_Events_Registration__c> registrations = [
-                    SELECT Id,
-                            Name,
-                            summit__Status__c,
-                            summit__Registrant_First_Name__c,
-                            summit__Registrant_Last_Name__c,
-                            summit__Preferred_First_Name_Formatted__c,
-                            summit__Registrant_Preferred_First_Name__c,
-                            summit__Registrant_Email__c,
-                            summit__Event__r.Name,
-                            summit__Event_Instance__r.summit__Instance_Title__c,
-                            summit__Event_Instance__r.summit__Instance_Start_Date__c
-                    FROM summit__Summit_Events_Registration__c
-                    WHERE
-                            summit__Event_Instance__c = :instanceId
-                            AND summit__Status__c != 'Cancelled'
+            // Build dynamic query conditions
+            String query = 'SELECT Id, Name, summit__Status__c, ' +
+                    'summit__Registrant_First_Name__c, summit__Registrant_Last_Name__c, ' +
+                    'summit__Preferred_First_Name_Formatted__c, summit__Registrant_Preferred_First_Name__c, ' +
+                    'summit__Registrant_Email__c, summit__Event__r.Name, ' +
+                    'summit__Event_Instance__r.summit__Instance_Title__c, ' +
+                    'summit__Event_Instance__r.summit__Instance_Start_Date__c ' +
+                    'FROM summit__Summit_Events_Registration__c ' +
+                    'WHERE summit__Event_Instance__c = :instanceId ' +
+                    'AND summit__Status__c != \'Cancelled\' ' +
+                    'AND summit__Status__c != \'Started\' ';
 
-                            AND (
-                                    (summit__Registrant_First_Name__c LIKE :firstNamePattern
-                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
+            // Build search conditions only for provided fields
+            List<String> conditions = new List<String>();
 
-                                    OR (summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern
+            if (!String.isBlank(firstName)) {
+                firstNamePattern = '%' + firstName + '%';
+                conditions.add('summit__Registrant_First_Name__c LIKE :firstNamePattern');
+                conditions.add('summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern');
+            }
 
-                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
-                                    OR summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern
-                                    OR summit__Registrant_Email__c LIKE :emailPattern
-                            )
-                    ORDER BY summit__Event_Instance__r.summit__Instance_Start_Date__c DESC,
-                            summit__Registrant_Last_Name__c,
-                            summit__Registrant_First_Name__c
-                    LIMIT 50
-            ];
+            if (!String.isBlank(lastName)) {
+                lastNamePattern = '%' + lastName + '%';
+                conditions.add('summit__Registrant_Last_Name__c LIKE :lastNamePattern');
+            }
+
+            if (!String.isBlank(firstName) && !String.isBlank(lastName)) {
+                fullNamePattern = '%' + firstName + ' ' + lastName + '%';
+                conditions.add('summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern');
+            }
+
+            if (!String.isBlank(email)) {
+                conditions.add('summit__Registrant_Email__c = :email');
+            }
+
+            // Add conditions to query if any exist
+            if (!conditions.isEmpty()) {
+                query += 'AND (' + String.join(conditions, ' OR ') + ') ';
+            }
+
+            query += 'ORDER BY summit__Event_Instance__r.summit__Instance_Start_Date__c DESC, ' +
+                    'summit__Registrant_Last_Name__c, summit__Registrant_First_Name__c ' +
+                    'LIMIT 50';
+
+            List<summit__Summit_Events_Registration__c> registrations = Database.query(query);
 
             for (summit__Summit_Events_Registration__c reg : registrations) {
                 RegistrationSearchResult result = new RegistrationSearchResult();
@@ -382,7 +415,7 @@ public with sharing class summitEventsCheckin {
                 result.eventName = reg.summit__Event__r.Name;
                 result.instanceTitle = reg.summit__Event_Instance__r.summit__Instance_Title__c;
                 result.status = reg.summit__Status__c;
-                result.isCheckedIn = reg.summit__Status__c == 'Attended';
+                result.isCheckedIn = reg.summit__Status__c == statusToCheck;
                 results.add(result);
             }
 
@@ -393,84 +426,6 @@ public with sharing class summitEventsCheckin {
         return results;
     }
 
-    /**
-     * Check in a registrant by registration ID
-     * @param registrationId - The Salesforce ID of the registration record
-     * @param instanceId - The event instance ID to scope the check-in to
-     * @return CheckinResult - Result object containing success status and message
-     */
-    @AuraEnabled
-    public static CheckinResult checkInRegistrantById(String registrationId, String instanceId) {
-        CheckinResult result = new CheckinResult();
-
-        try {
-            if (String.isBlank(registrationId)) {
-                result.success = false;
-                result.message = 'Registration ID cannot be empty';
-                return result;
-            }
-
-            if (String.isBlank(instanceId)) {
-                result.success = false;
-                result.message = 'Event instance must be selected';
-                return result;
-            }
-
-            // Query for the registration
-            List<summit__Summit_Events_Registration__c> registrations = [
-                    SELECT Id, Name, summit__Status__c,
-                            summit__Registrant_First_Name__c,
-                            summit__Registrant_Last_Name__c,
-                            summit__Event__r.Name,
-                            summit__Event_Instance__r.summit__Instance_Title__c
-                    FROM summit__Summit_Events_Registration__c
-                    WHERE Id = :registrationId
-                    AND summit__Event_Instance__c = :instanceId
-                    LIMIT 1
-            ];
-
-            if (registrations.isEmpty()) {
-                result.success = false;
-                result.message = 'No registration found';
-                return result;
-            }
-
-            summit__Summit_Events_Registration__c registration = registrations[0];
-
-            // Check if already checked in
-            if (registration.summit__Status__c == 'Attended') {
-                result.success = true;
-                result.alreadyCheckedIn = true;
-                result.message = 'This registrant is already checked in';
-                result.registrationId = registration.Id;
-                result.registrantName = getFullName(registration);
-                result.eventName = registration.summit__Event__r.Name;
-                result.instanceTitle = registration.summit__Event_Instance__r.summit__Instance_Title__c;
-                return result;
-            }
-
-            // Update status to Attended
-            registration.summit__Status__c = 'Attended';
-            update registration;
-
-            result.success = true;
-            result.alreadyCheckedIn = false;
-            result.message = 'Check-in successful!';
-            result.registrationId = registration.Id;
-            result.registrantName = getFullName(registration);
-            result.eventName = registration.summit__Event__r.Name;
-            result.instanceTitle = registration.summit__Event_Instance__r.summit__Instance_Title__c;
-
-        } catch (DmlException e) {
-            result.success = false;
-            result.message = 'Error updating registration: ' + e.getMessage();
-        } catch (Exception e) {
-            result.success = false;
-            result.message = 'An unexpected error occurred: ' + e.getMessage();
-        }
-
-        return result;
-    }
 
     /**
      * Helper method to get full name from registration

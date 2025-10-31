@@ -6,13 +6,13 @@ import jsQR from '@salesforce/resourceUrl/jsQR';
 import lookupRegistrant from '@salesforce/apex/summitEventsCheckin.lookupRegistrant';
 import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegistrant';
 import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
-import checkInRegistrantById from '@salesforce/apex/summitEventsCheckin.checkInRegistrantById';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
 import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
 import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
 
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
+    @api checkinStatus = 'Attended'; // Configurable status value for check-in
     @track qrCodeInput = '';
     @track isProcessing = false;
     @track lastCheckinResult = null;
@@ -123,7 +123,10 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
 
         try {
-            const count = await getTotalAttendedCount({ instanceId: this.selectedInstanceId });
+            const count = await getTotalAttendedCount({
+                instanceId: this.selectedInstanceId,
+                checkinStatus: this.checkinStatus
+            });
             this.totalAttendedCount = count || 0;
         } catch (error) {
             console.error('Error refreshing attended count:', error);
@@ -401,7 +404,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
             // Lookup registration without checking in
             const result = await lookupRegistrant({
                 qrCodeValue: this.qrCodeInput.trim(),
-                instanceId: this.selectedInstanceId
+                instanceId: this.selectedInstanceId,
+                checkinStatus: this.checkinStatus
             });
 
             if (result.success) {
@@ -444,7 +448,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
         try {
             const result = await checkInRegistrant({
                 qrCodeValue: this.pendingCheckin.registrationId,
-                instanceId: this.selectedInstanceId
+                instanceId: this.selectedInstanceId,
+                checkinStatus: this.checkinStatus
             });
 
             this.lastCheckinResult = result;
@@ -492,7 +497,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
         try {
             const result = await undoCheckIn({
                 registrationId: this.pendingCheckin.registrationId,
-                instanceId: this.selectedInstanceId
+                instanceId: this.selectedInstanceId,
+                checkinStatus: this.checkinStatus
             });
 
             if (result.success) {
@@ -587,22 +593,46 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 firstName: this.firstName,
                 lastName: this.lastName,
                 email: this.email,
-                instanceId: this.selectedInstanceId
+                instanceId: this.selectedInstanceId,
+                checkinStatus: this.checkinStatus
             });
 
             this.searchResults = results;
             this.searchPerformed = true;
 
             if (results.length === 0) {
-                this.showToast('No Results', 'No registrations found matching your search', 'info');
+                this.showToast('No Results', 'No registrations found matching the criteria.', 'info');
             }
 
         } catch (error) {
-            console.error('Error searching registrations:', error);
-            this.showToast('Search Error', 'An error occurred while searching. Please try again.', 'error');
+            console.error('Error during registration search:', error);
+            this.showToast('Error', 'An unexpected error occurred. Please try again.', 'error');
         } finally {
             this.isSearching = false;
         }
+    }
+
+    handleSelectRegistration(event) {
+        const registrationId = event.currentTarget.dataset.id;
+
+        if (!registrationId) {
+            console.log('No registration ID found in click event');
+            return;
+        }
+
+        console.log('Registration selected:', registrationId);
+
+        // Clear search results and reset search form
+        this.searchResults = [];
+        this.searchPerformed = false;
+        this.currentPage = 1;
+        this.firstName = '';
+        this.lastName = '';
+        this.email = '';
+
+        // Set the registration ID and trigger check-in lookup
+        this.qrCodeInput = registrationId;
+        this.handleCheckIn();
     }
 
     handlePreviousPage() {
@@ -617,56 +647,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
     }
 
-    async handleSelectRegistration(event) {
-        const registrationId = event.currentTarget.dataset.id;
-        const registration = this.searchResults.find(r => r.registrationId === registrationId);
-
-        if (!registration) return;
-
-        this.isProcessing = true;
-
-        try {
-            // Lookup registration to show pending check-in
-            const result = await lookupRegistrant({
-                qrCodeValue: registration.registrationId,
-                instanceId: this.selectedInstanceId
-            });
-
-            if (result.success) {
-                // Store pending registration for confirmation
-                this.pendingCheckin = result;
-                this.showResult = true;
-                this.lastCheckinResult = null;
-
-                // Clear search results to show confirmation card
-                this.searchResults = [];
-                this.firstName = '';
-                this.lastName = '';
-                this.email = '';
-                this.searchPerformed = false;
-                this.currentPage = 1;
-
-                if (result.alreadyCheckedIn) {
-                    this.showToast(
-                        'Already Checked In',
-                        `${result.registrantName} was already checked in.`,
-                        'info'
-                    );
-                }
-            } else {
-                this.showToast('Error', result.message, 'error');
-            }
-
-        } catch (error) {
-            console.error('Error during lookup:', error);
-            this.showToast(
-                'Error',
-                'An unexpected error occurred. Please try again.',
-                'error'
-            );
-        } finally {
-            this.isProcessing = false;
-        }
+    get isSearchingOrProcessing() {
+        return this.isSearching || this.isProcessing;
     }
 
     get hasSearchResults() {
@@ -674,18 +656,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     get showNoResults() {
-        return this.searchPerformed && this.searchResults.length === 0;
-    }
-
-    get isSearchingOrProcessing() {
-        return this.isSearching || this.isProcessing;
+        return this.searchPerformed && !this.isSearching && this.searchResults.length === 0;
     }
 
     // Pagination getters
     get paginatedResults() {
-        const startIndex = (this.currentPage - 1) * this.pageSize;
-        const endIndex = startIndex + this.pageSize;
-        return this.searchResults.slice(startIndex, endIndex);
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = start + this.pageSize;
+        return this.searchResults.slice(start, end);
     }
 
     get totalPages() {
@@ -802,4 +780,3 @@ export default class SummitEventsQrCheckin extends LightningElement {
         return '';
     }
 }
-

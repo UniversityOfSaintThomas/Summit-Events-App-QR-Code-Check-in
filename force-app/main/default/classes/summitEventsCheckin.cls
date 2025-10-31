@@ -356,44 +356,56 @@ public with sharing class summitEventsCheckin {
                 return results;
             }
 
-            String firstNamePattern = String.isBlank(firstName) ? '%' : '%' + firstName + '%';
-            String lastNamePattern = String.isBlank(lastName) ? '%' : '%' + lastName + '%';
-            String emailPattern = String.isBlank(email) ? '%' : '%' + email + '%';
-            String fullNamePattern = '%' + firstName + ' ' + lastName + '%';
+            // Declare pattern variables for query binding
+            String firstNamePattern = '';
+            String lastNamePattern = '';
+            String fullNamePattern = '';
 
-            // Query for matching registrations
-            List<summit__Summit_Events_Registration__c> registrations = [
-                    SELECT Id,
-                            Name,
-                            summit__Status__c,
-                            summit__Registrant_First_Name__c,
-                            summit__Registrant_Last_Name__c,
-                            summit__Preferred_First_Name_Formatted__c,
-                            summit__Registrant_Preferred_First_Name__c,
-                            summit__Registrant_Email__c,
-                            summit__Event__r.Name,
-                            summit__Event_Instance__r.summit__Instance_Title__c,
-                            summit__Event_Instance__r.summit__Instance_Start_Date__c
-                    FROM summit__Summit_Events_Registration__c
-                    WHERE
-                            summit__Event_Instance__c = :instanceId
-                            AND summit__Status__c != 'Cancelled'
+            // Build dynamic query conditions
+            String query = 'SELECT Id, Name, summit__Status__c, ' +
+                    'summit__Registrant_First_Name__c, summit__Registrant_Last_Name__c, ' +
+                    'summit__Preferred_First_Name_Formatted__c, summit__Registrant_Preferred_First_Name__c, ' +
+                    'summit__Registrant_Email__c, summit__Event__r.Name, ' +
+                    'summit__Event_Instance__r.summit__Instance_Title__c, ' +
+                    'summit__Event_Instance__r.summit__Instance_Start_Date__c ' +
+                    'FROM summit__Summit_Events_Registration__c ' +
+                    'WHERE summit__Event_Instance__c = :instanceId ' +
+                    'AND summit__Status__c != \'Cancelled\' ' +
+                    'AND summit__Status__c != \'Started\' ';
 
-                            AND (
-                                    (summit__Registrant_First_Name__c LIKE :firstNamePattern
-                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
+            // Build search conditions only for provided fields
+            List<String> conditions = new List<String>();
 
-                                    OR (summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern
+            if (!String.isBlank(firstName)) {
+                firstNamePattern = '%' + firstName + '%';
+                conditions.add('summit__Registrant_First_Name__c LIKE :firstNamePattern');
+                conditions.add('summit__Registrant_Preferred_First_Name__c LIKE :firstNamePattern');
+            }
 
-                                    AND summit__Registrant_Last_Name__c LIKE :lastNamePattern)
-                                    OR summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern
-                                    OR summit__Registrant_Email__c LIKE :emailPattern
-                            )
-                    ORDER BY summit__Event_Instance__r.summit__Instance_Start_Date__c DESC,
-                            summit__Registrant_Last_Name__c,
-                            summit__Registrant_First_Name__c
-                    LIMIT 50
-            ];
+            if (!String.isBlank(lastName)) {
+                lastNamePattern = '%' + lastName + '%';
+                conditions.add('summit__Registrant_Last_Name__c LIKE :lastNamePattern');
+            }
+
+            if (!String.isBlank(firstName) && !String.isBlank(lastName)) {
+                fullNamePattern = '%' + firstName + ' ' + lastName + '%';
+                conditions.add('summit__Preferred_First_Name_Formatted__c LIKE :fullNamePattern');
+            }
+
+            if (!String.isBlank(email)) {
+                conditions.add('summit__Registrant_Email__c = :email');
+            }
+
+            // Add conditions to query if any exist
+            if (!conditions.isEmpty()) {
+                query += 'AND (' + String.join(conditions, ' OR ') + ') ';
+            }
+
+            query += 'ORDER BY summit__Event_Instance__r.summit__Instance_Start_Date__c DESC, ' +
+                    'summit__Registrant_Last_Name__c, summit__Registrant_First_Name__c ' +
+                    'LIMIT 50';
+
+            List<summit__Summit_Events_Registration__c> registrations = Database.query(query);
 
             for (summit__Summit_Events_Registration__c reg : registrations) {
                 RegistrationSearchResult result = new RegistrationSearchResult();

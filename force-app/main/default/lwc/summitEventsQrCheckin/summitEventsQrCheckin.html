@@ -108,21 +108,50 @@
 
                 <!-- Check-In Options -->
                 <div class="slds-m-bottom_medium slds-text-align_center">
-                    <!-- Camera Scan Button -->
-                    <div class="slds-m-bottom_medium slds-text-align_center">
-                        <lightning-button
-                                label="Scan with Camera"
-                                variant="brand"
-                                icon-name="utility:photo"
-                                onclick={handleBrowserCameraScan}
-                                disabled={isProcessing}
-                                class="slds-size_1-of-1"
-                        ></lightning-button>
-                        <div class="slds-text-body_small slds-text-color_weak slds-text-align_center slds-m-top_x-small">
-                            <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                            Camera automatically uses the best scanner for your device
+                    <!-- Camera Scan Button (only show when camera is not active) -->
+                    <template if:false={showCameraScanner}>
+                        <div class="slds-m-bottom_medium slds-text-align_center">
+                            <lightning-button
+                                    label="Scan with Camera"
+                                    variant="brand"
+                                    icon-name="utility:photo"
+                                    onclick={handleBrowserCameraScan}
+                                    disabled={isProcessing}
+                                    class="slds-size_1-of-1"
+                            ></lightning-button>
+                            <div class="slds-text-body_small slds-text-color_weak slds-text-align_center slds-m-top_x-small">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                Camera automatically uses the best scanner for your device
+                            </div>
                         </div>
-                    </div>
+                    </template>
+
+                    <!-- Inline Camera Scanner (shows when scanning is active) -->
+                    <template if:true={showCameraScanner}>
+                        <div class="slds-m-bottom_medium">
+                            <div class="inline-camera-header slds-m-bottom_small">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">
+                                    <lightning-icon icon-name="utility:photo" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                    Scan QR Code
+                                </h3>
+                                <p class="slds-text-body_small slds-text-color_weak">
+                                    Position the QR code within the camera view
+                                </p>
+                            </div>
+                            <div class="inline-camera-container">
+                                <video lwc:ref="videoElement" autoplay playsinline class="camera-video"></video>
+                                <canvas lwc:ref="canvasElement" class="camera-canvas"></canvas>
+                            </div>
+                            <div class="slds-m-top_small slds-text-align_center">
+                                <lightning-button
+                                        label="Cancel Scanning"
+                                        variant="neutral"
+                                        icon-name="utility:close"
+                                        onclick={handleCloseCameraScanner}
+                                ></lightning-button>
+                            </div>
+                        </div>
+                    </template>
 
                     <!-- Or Divider -->
                     <div class="slds-text-align_center slds-m-vertical_medium">
@@ -442,38 +471,6 @@
                             </div>
                         </div>
                     </div>
-                </template>
-
-                <!-- Camera Scanner Modal -->
-                <template if:true={showCameraScanner}>
-                    <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
-                        <div class="slds-modal__container">
-                            <header class="slds-modal__header">
-                                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-                                        title="Close" onclick={handleCloseCameraScanner}>
-                                    <lightning-icon icon-name="utility:close" size="small" alternative-text="close"></lightning-icon>
-                                    <span class="slds-assistive-text">Close</span>
-                                </button>
-                                <h2 class="slds-text-heading_medium">Scan QR Code</h2>
-                            </header>
-                            <div class="slds-modal__content slds-p-around_medium" id="modal-content">
-                                <div class="camera-container">
-                                    <video lwc:ref="videoElement" autoplay playsinline class="camera-video"></video>
-                                    <canvas lwc:ref="canvasElement" class="camera-canvas"></canvas>
-                                </div>
-                                <p class="slds-text-align_center slds-m-top_medium">
-                                    Position the QR code within the camera view
-                                </p>
-                            </div>
-                            <footer class="slds-modal__footer">
-                                <lightning-button
-                                        label="Cancel"
-                                        onclick={handleCloseCameraScanner}
-                                ></lightning-button>
-                            </footer>
-                        </div>
-                    </section>
-                    <div class="slds-backdrop slds-backdrop_open"></div>
                 </template>
 
             </template>

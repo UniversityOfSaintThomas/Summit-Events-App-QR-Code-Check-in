@@ -8,6 +8,7 @@ import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegis
 import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
 import checkInRegistrantById from '@salesforce/apex/summitEventsCheckin.checkInRegistrantById';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
+import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
 
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
@@ -17,6 +18,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
     @track showResult = false;
     @track pendingCheckin = null; // Holds registration awaiting check-in confirmation
     @track scanCount = 0;
+    @track totalAttendedCount = 0; // Total attended for the instance
     @track sessionActive = false;
     @track sessionStartTime = null;
     @track showCameraScanner = false;
@@ -112,11 +114,26 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.selectedInstanceId = event.target.value;
     }
 
+    async refreshTotalAttendedCount() {
+        if (!this.selectedInstanceId) {
+            this.totalAttendedCount = 0;
+            return;
+        }
+
+        try {
+            const count = await getTotalAttendedCount({ instanceId: this.selectedInstanceId });
+            this.totalAttendedCount = count || 0;
+        } catch (error) {
+            console.error('Error refreshing attended count:', error);
+            this.totalAttendedCount = 0;
+        }
+    }
+
     handleQrCodeChange(event) {
         this.qrCodeInput = event.target.value;
     }
 
-    handleStartSession() {
+    async handleStartSession() {
         if (!this.selectedInstanceId) {
             this.showToast('Instance Required', 'Please select an event instance before starting the session.', 'warning');
             return;
@@ -134,6 +151,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.searchResults = [];
         this.searchPerformed = false;
         this.currentPage = 1;
+
+        // Load initial total attended count
+        await this.refreshTotalAttendedCount();
 
         this.showToast('Session Started', 'Scanning session is now active. Ready to check in registrants.', 'success');
     }
@@ -431,6 +451,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
                     `${result.registrantName} has been checked in successfully.`,
                     'success'
                 );
+                // Refresh total attended count
+                await this.refreshTotalAttendedCount();
             }
 
             // Clear pending check-in

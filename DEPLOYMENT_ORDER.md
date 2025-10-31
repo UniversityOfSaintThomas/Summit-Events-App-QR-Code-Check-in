@@ -1,6 +1,6 @@
 # Summit Events QR Check-In - Deployment Guide
 
-**Version 1.0** | Step-by-Step Deployment Instructions
+**Version 0.1** | Step-by-Step Deployment Instructions
 
 ---
 

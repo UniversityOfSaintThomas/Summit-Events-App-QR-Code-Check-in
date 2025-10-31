@@ -1,18 +1,18 @@
 # Summit Events QR Check-In - Documentation Index
 
-**Version 1.0** | Complete Documentation Suite
+**Version 0.1** | Complete Documentation Suite
 
 ---
 
 ## 📚 Documentation Overview
 
-This folder contains comprehensive documentation for the Summit Events QR Check-In System version 1.0. All documentation has been consolidated and organized for the production release.
+This folder contains comprehensive documentation for the Summit Events QR Check-In System version 0.1. All documentation has been consolidated and organized for the production release.
 
 ---
 
 ## 📖 Available Documentation
 
-### 1. **[V1.0 Release Notes](V1.0-RELEASE-NOTES.md)**
+### 1. **[V0.1 Release Notes](V0.1-RELEASE-NOTES.md)**
 **Start here for a complete overview**
 
 - What's new in Version 1.0
@@ -97,22 +97,22 @@ Located in root: `DEPLOYMENT_ORDER.md`
 → Focus on: Getting Started, Checking In Registrants, Tips & Best Practices
 
 ### **I'm an Event Coordinator**
-→ Read: **[User Guide](USER-GUIDE.md)** + **[V1.0 Release Notes](V1.0-RELEASE-NOTES.md)** (Training section)  
+→ Read: **[User Guide](USER-GUIDE.md)** + **[V1.0 Release Notes](V0.1-RELEASE-NOTES.md)** (Training section)  
 → Focus on: Session management, troubleshooting, training your team
 
 ### **I'm Deploying This System**
 → Read: **[Deployment Guide](../DEPLOYMENT_ORDER.md)**  
-→ Then: **[V1.0 Release Notes](V1.0-RELEASE-NOTES.md)** (Installation section)  
+→ Then: **[V1.0 Release Notes](V0.1-RELEASE-NOTES.md)** (Installation section)  
 → Focus on: Phased deployment, permissions, verification
 
 ### **I'm a Salesforce Administrator**
-→ Read: **[V1.0 Release Notes](V1.0-RELEASE-NOTES.md)** (complete)  
+→ Read: **[V1.0 Release Notes](V0.1-RELEASE-NOTES.md)** (complete)  
 → Then: **[Deployment Guide](../DEPLOYMENT_ORDER.md)**  
 → Reference: **[Architecture](ARCHITECTURE.md)** for troubleshooting
 
 ### **I'm a Developer**
 → Read: **[Architecture](ARCHITECTURE.md)** (complete)  
-→ Reference: **[V1.0 Release Notes](V1.0-RELEASE-NOTES.md)** (Technical Specifications)  
+→ Reference: **[V1.0 Release Notes](V0.1-RELEASE-NOTES.md)** (Technical Specifications)  
 → Code: Review Apex classes and LWC component in `force-app/`
 
 ---
@@ -125,12 +125,12 @@ Located in root: `DEPLOYMENT_ORDER.md`
 | How do I use the camera? | [User Guide](USER-GUIDE.md) | Checking In Registrants |
 | How do I search manually? | [User Guide](USER-GUIDE.md) | Method 2: Manual Search |
 | How do I undo a check-in? | [User Guide](USER-GUIDE.md) | Undoing Check-Ins |
-| What browsers are supported? | [V1.0 Release Notes](V1.0-RELEASE-NOTES.md) | Browser Support |
-| What's the test coverage? | [V1.0 Release Notes](V1.0-RELEASE-NOTES.md) | Technical Specifications |
+| What browsers are supported? | [V1.0 Release Notes](V0.1-RELEASE-NOTES.md) | Browser Support |
+| What's the test coverage? | [V1.0 Release Notes](V0.1-RELEASE-NOTES.md) | Technical Specifications |
 | How does the system work? | [Architecture](ARCHITECTURE.md) | System Architecture |
 | Camera not working? | [User Guide](USER-GUIDE.md) | FAQ / Camera Questions |
 | Deployment failed? | [Deployment Guide](../DEPLOYMENT_ORDER.md) | Troubleshooting |
-| What's new in v1.0? | [V1.0 Release Notes](V1.0-RELEASE-NOTES.md) | What's New |
+| What's new in v1.0? | [V1.0 Release Notes](V0.1-RELEASE-NOTES.md) | What's New |
 
 ---
 
@@ -202,7 +202,7 @@ Found an error or have a suggestion?
 
 ### For Administrator Training
 **Materials to use:**
-1. [V1.0 Release Notes](V1.0-RELEASE-NOTES.md) - Complete read
+1. [V1.0 Release Notes](V0.1-RELEASE-NOTES.md) - Complete read
 2. [Deployment Guide](../DEPLOYMENT_ORDER.md) - Hands-on deployment
 3. [Architecture](ARCHITECTURE.md) - For troubleshooting
 
@@ -213,7 +213,7 @@ Found an error or have a suggestion?
 ## 🔗 Quick Links
 
 **Main Documentation:**
-- [📄 V1.0 Release Notes](V1.0-RELEASE-NOTES.md)
+- [📄 V1.0 Release Notes](V0.1-RELEASE-NOTES.md)
 - [👥 User Guide](USER-GUIDE.md)
 - [🏗️ Architecture](ARCHITECTURE.md)
 - [🚀 Deployment Guide](../DEPLOYMENT_ORDER.md)
@@ -225,7 +225,7 @@ Found an error or have a suggestion?
 
 ---
 
-**Version 1.0 Documentation - Complete and Production Ready ✅**
+**Version 0.1 Documentation - Complete and Production Ready ✅**
 
 ## Installation
 

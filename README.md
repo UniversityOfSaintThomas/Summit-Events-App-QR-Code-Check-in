@@ -1,6 +1,6 @@
 # Summit Events QR Check-In System
 
-**Version 1.0** | Production Ready | 89% Test Coverage
+**Version 0.1** | Production Ready | 89% Test Coverage
 
 A comprehensive event check-in solution for Salesforce Summit Events App with smart camera scanning, manual search, and session management.
 
@@ -72,7 +72,7 @@ force-app/main/default/
 
 ## 📖 Documentation
 
-- **[V1.0 Release Notes](docs/V1.0-RELEASE-NOTES.md)** - Complete feature list & installation
+- **[V1.0 Release Notes](docs/V0.1-RELEASE-NOTES.md)** - Complete feature list & installation
 - **[User Guide](docs/USER-GUIDE.md)** - How to use the component
 - **[Architecture](docs/ARCHITECTURE.md)** - Technical documentation
 - **[Deployment Guide](DEPLOYMENT_ORDER.md)** - Step-by-step deployment
@@ -143,7 +143,7 @@ force-app/main/default/
 | Permission errors | Enable Apex class, grant object permissions |
 | Search returns nothing | Check spelling, try partial names, verify instance |
 
-**Full troubleshooting guide:** See [V1.0 Release Notes](docs/V1.0-RELEASE-NOTES.md#-troubleshooting)
+**Full troubleshooting guide:** See [V1.0 Release Notes](docs/V0.1-RELEASE-NOTES.md#-troubleshooting)
 
 ---
 

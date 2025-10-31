@@ -1,6 +1,6 @@
 # Summit Events QR Check-In - User Guide
 
-**Version 1.0** | Complete User Documentation
+**Version 0.1** | Complete User Documentation
 
 ---
 

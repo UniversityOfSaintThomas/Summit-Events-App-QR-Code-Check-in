@@ -235,6 +235,86 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
+     * Undo a check-in by reverting registration status from Attended back to Registered
+     * @param registrationId - The ID of the registration to undo
+     * @param instanceId - The event instance ID to verify the registration belongs to this instance
+     * @return CheckinResult - Result object containing success status and message
+     */
+    @AuraEnabled
+    public static CheckinResult undoCheckIn(String registrationId, String instanceId) {
+        CheckinResult result = new CheckinResult();
+        System.debug('Undo Check-In for Registration ID: ' + registrationId);
+        System.debug('Instance ID: ' + instanceId);
+
+        try {
+            if (String.isBlank(registrationId)) {
+                result.success = false;
+                result.message = 'Registration ID cannot be empty';
+                return result;
+            }
+
+            if (String.isBlank(instanceId)) {
+                result.success = false;
+                result.message = 'Event instance must be selected';
+                return result;
+            }
+
+            // Query for the registration
+            List<summit__Summit_Events_Registration__c> registrations = [
+                    SELECT Id, Name, summit__Status__c,
+                            summit__Registrant_First_Name__c,
+                            summit__Registrant_Last_Name__c,
+                            summit__Event__r.Name,
+                            summit__Event_Instance__r.summit__Instance_Title__c,
+                            summit__Event_Instance__r.summit__Instance_Start_Date__c,
+                            summit__Event_Instance__r.summit__Instance_Start_Time__c
+                    FROM summit__Summit_Events_Registration__c
+                    WHERE Id = :registrationId
+                    AND summit__Event_Instance__c = :instanceId
+                    LIMIT 1
+            ];
+
+            if (registrations.isEmpty()) {
+                result.success = false;
+                result.message = 'Registration not found';
+                return result;
+            }
+
+            summit__Summit_Events_Registration__c registration = registrations[0];
+
+            // Check if registration is actually checked in
+            if (registration.summit__Status__c != 'Attended') {
+                result.success = false;
+                result.message = 'Registration is not checked in';
+                return result;
+            }
+
+            // Revert status back to Registered
+            registration.summit__Status__c = 'Registered';
+            update registration;
+
+            result.success = true;
+            result.alreadyCheckedIn = false;
+            result.message = 'Check-in successfully undone';
+            result.registrationId = registration.Id;
+            result.registrantName = getFullName(registration);
+            result.eventName = registration.summit__Event__r.Name;
+            result.instanceTitle = registration.summit__Event_Instance__r.summit__Instance_Title__c;
+            result.instanceStartDate = registration.summit__Event_Instance__r.summit__Instance_Start_Date__c;
+            result.instanceStartTime = registration.summit__Event_Instance__r.summit__Instance_Start_Time__c;
+
+        } catch (DmlException e) {
+            result.success = false;
+            result.message = 'Error updating registration: ' + e.getMessage();
+        } catch (Exception e) {
+            result.success = false;
+            result.message = 'An unexpected error occurred: ' + e.getMessage();
+        }
+
+        return result;
+    }
+
+    /**
      * Search for registrations by first name, last name, and/or email
      * @param firstName - First name to search for
      * @param lastName - Last name to search for

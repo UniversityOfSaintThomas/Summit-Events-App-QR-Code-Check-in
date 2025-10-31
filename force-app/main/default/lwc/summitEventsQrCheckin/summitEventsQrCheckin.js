@@ -9,6 +9,7 @@ import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegi
 import checkInRegistrantById from '@salesforce/apex/summitEventsCheckin.checkInRegistrantById';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
 import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
+import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
 
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
@@ -479,6 +480,53 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.pendingCheckin = null;
         this.showResult = false;
         this.lastCheckinResult = null;
+    }
+
+    async handleUndoCheckIn() {
+        if (!this.pendingCheckin || !this.pendingCheckin.registrationId) {
+            return;
+        }
+
+        this.isProcessing = true;
+
+        try {
+            const result = await undoCheckIn({
+                registrationId: this.pendingCheckin.registrationId,
+                instanceId: this.selectedInstanceId
+            });
+
+            if (result.success) {
+                this.showToast(
+                    'Check-In Undone',
+                    `${result.registrantName} has been reverted to Registered status.`,
+                    'success'
+                );
+
+                // Decrement scan count if it was from this session
+                if (this.scanCount > 0) {
+                    this.scanCount--;
+                }
+
+                // Refresh total attended count
+                await this.refreshTotalAttendedCount();
+
+                // Clear pending check-in
+                this.pendingCheckin = null;
+                this.showResult = false;
+            } else {
+                this.showToast('Error', result.message, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error undoing check-in:', error);
+            this.showToast(
+                'Error',
+                'An unexpected error occurred. Please try again.',
+                'error'
+            );
+        } finally {
+            this.isProcessing = false;
+        }
     }
 
     handleClearInput() {

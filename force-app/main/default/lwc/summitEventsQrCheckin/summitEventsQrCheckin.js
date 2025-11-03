@@ -1,7 +1,7 @@
-import { LightningElement, track, api } from 'lwc';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import { getBarcodeScanner } from 'lightning/mobileCapabilities';
-import { loadScript } from 'lightning/platformResourceLoader';
+import {LightningElement, track, api} from 'lwc';
+import {ShowToastEvent} from 'lightning/platformShowToastEvent';
+import {getBarcodeScanner} from 'lightning/mobileCapabilities';
+import {loadScript} from 'lightning/platformResourceLoader';
 import jsQR from '@salesforce/resourceUrl/jsQR';
 import lookupRegistrant from '@salesforce/apex/summitEventsCheckin.lookupRegistrant';
 import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegistrant';
@@ -76,10 +76,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
             // Legacy API fallback
             if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
                 return {
-                    getUserMedia: function(constraints) {
-                        const legacyGetUserMedia = navigator.getUserMedia ||
-                                                   navigator.webkitGetUserMedia ||
-                                                   navigator.mozGetUserMedia;
+                    getUserMedia: function (constraints) {
+                        const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
                         return new Promise((resolve, reject) => {
                             legacyGetUserMedia.call(navigator, constraints, resolve, reject);
                         });
@@ -120,7 +118,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.loadingInstances = true;
 
         try {
-            const instances = await getEventInstancesByDate({ selectedDate: this.selectedDate });
+            const instances = await getEventInstancesByDate({selectedDate: this.selectedDate});
 
             if (instances && instances.length > 0) {
                 this.instanceOptions = instances.map(inst => ({
@@ -169,18 +167,13 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         try {
             const count = await getTotalAttendedCount({
-                instanceId: this.selectedInstanceId,
-                checkinStatus: this.checkinStatus
+                instanceId: this.selectedInstanceId, checkinStatus: this.checkinStatus
             });
             this.totalAttendedCount = count || 0;
         } catch (error) {
             console.error('Error refreshing attended count:', error);
             this.totalAttendedCount = 0;
         }
-    }
-
-    handleQrCodeChange(event) {
-        this.qrCodeInput = event.target.value;
     }
 
     async handleStartSession() {
@@ -217,19 +210,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         if (this.myScanner != null && this.myScanner.isAvailable()) {
             const scanningOptions = {
-                barcodeTypes: [
-                    this.myScanner.barcodeTypes.QR,
-                    this.myScanner.barcodeTypes.CODE_128,
-                    this.myScanner.barcodeTypes.CODE_39,
-                    this.myScanner.barcodeTypes.CODE_93,
-                    this.myScanner.barcodeTypes.DATA_MATRIX,
-                    this.myScanner.barcodeTypes.EAN_8,
-                    this.myScanner.barcodeTypes.EAN_13,
-                    this.myScanner.barcodeTypes.ITF,
-                    this.myScanner.barcodeTypes.PDF_417,
-                    this.myScanner.barcodeTypes.UPC_A,
-                    this.myScanner.barcodeTypes.UPC_E
-                ],
+                barcodeTypes: [this.myScanner.barcodeTypes.QR, this.myScanner.barcodeTypes.CODE_128, this.myScanner.barcodeTypes.CODE_39, this.myScanner.barcodeTypes.CODE_93, this.myScanner.barcodeTypes.DATA_MATRIX, this.myScanner.barcodeTypes.EAN_8, this.myScanner.barcodeTypes.EAN_13, this.myScanner.barcodeTypes.ITF, this.myScanner.barcodeTypes.PDF_417, this.myScanner.barcodeTypes.UPC_A, this.myScanner.barcodeTypes.UPC_E],
                 instructionText: 'Scan the registrant QR code',
                 successText: 'Scanning complete.'
             };
@@ -249,11 +230,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
                     this.myScanner.endCapture();
                 });
         } else {
-            this.showToast(
-                'Camera Not Available',
-                'Camera scanning is only available on mobile devices. Please use manual entry or a USB scanner.',
-                'info'
-            );
+            this.showToast('Camera Not Available', 'Camera scanning is only available on mobile devices. Please use manual entry or a USB scanner.', 'info');
         }
     }
 
@@ -276,11 +253,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         // On desktop/browser - use jsQR camera
         // Check if running in secure context (HTTPS or localhost)
         if (!window.isSecureContext) {
-            this.showToast(
-                'Secure Connection Required',
-                'Camera access requires HTTPS. Please access this page via HTTPS or use manual search.',
-                'error'
-            );
+            this.showToast('Secure Connection Required', 'Camera access requires HTTPS. Please access this page via HTTPS or use manual search.', 'error');
             console.error('❌ Camera requires secure context (HTTPS). Current protocol:', window.location.protocol);
             return;
         }
@@ -289,11 +262,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         const mediaDevices = this.getMediaDevices();
 
         if (!mediaDevices) {
-            this.showToast(
-                'Camera Not Available',
-                'Camera requires Lightning Web Security. Ask your admin to enable LWS in Setup → Session Settings, or use manual search.',
-                'warning'
-            );
+            this.showToast('Camera Not Available', 'Camera requires Lightning Web Security. Ask your admin to enable LWS in Setup → Session Settings, or use manual search.', 'warning');
             console.error('❌ navigator.mediaDevices is not available (blocked by Locker Service)');
             console.error('ℹ️ Solution: Enable Lightning Web Security in Setup → Session Settings');
             console.error('ℹ️ Alternative: Use Salesforce Mobile App or manual search');
@@ -301,30 +270,24 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
 
         if (!mediaDevices.getUserMedia) {
-            this.showToast(
-                'getUserMedia Not Supported',
-                'Your browser does not support camera access. Please use the Salesforce Mobile App or manual search.',
-                'error'
-            );
+            this.showToast('getUserMedia Not Supported', 'Your browser does not support camera access. Please use the Salesforce Mobile App or manual search.', 'error');
             console.error('❌ getUserMedia is not available');
             return;
         }
 
         if (!this.jsQRLoaded || !this.jsQRLibrary) {
-            this.showToast(
-                'Scanner Loading',
-                'QR code scanner is still loading. Please try again in a moment.',
-                'info'
-            );
+            this.showToast('Scanner Loading', 'QR code scanner is still loading. Please try again in a moment.', 'info');
             console.warn('⚠️ jsQR library not loaded yet');
             return;
         }
 
         this.showCameraScanner = true;
 
-        setTimeout(() => {
-            this.startCameraScanning();
-        }, 100);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.startCameraScanning();
+            });
+        });
     }
 
     async startCameraScanning() {
@@ -344,7 +307,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             }
 
             this.videoStream = await mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
+                video: {facingMode: 'environment'}
             });
 
             video.srcObject = this.videoStream;
@@ -412,11 +375,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
         this.sessionActive = false;
         const duration = this.getSessionDuration();
 
-        this.showToast(
-            'Session Ended',
-            `Checked in ${this.scanCount} registrant${this.scanCount !== 1 ? 's' : ''} in ${duration}`,
-            'info'
-        );
+        this.showToast('Session Ended', `Checked in ${this.scanCount} registrant${this.scanCount !== 1 ? 's' : ''} in ${duration}`, 'info');
     }
 
     handleResetSession() {
@@ -455,13 +414,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
     }
 
-    handleQrCodeKeyPress(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            this.handleCheckIn();
-        }
-    }
-
     async handleCheckIn() {
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
@@ -492,11 +444,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 this.showResult = true;
 
                 if (result.alreadyCheckedIn) {
-                    this.showToast(
-                        'Already Checked In',
-                        `${result.registrantName} was already checked in.`,
-                        'info'
-                    );
+                    this.showToast('Already Checked In', `${result.registrantName} was already checked in.`, 'info');
                 }
             } else {
                 this.showToast('Error', result.message, 'error');
@@ -506,11 +454,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         } catch (error) {
             console.error('Error during lookup:', error);
-            this.showToast(
-                'Error',
-                'An unexpected error occurred. Please try again.',
-                'error'
-            );
+            this.showToast('Error', 'An unexpected error occurred. Please try again.', 'error');
         } finally {
             this.isProcessing = false;
         }
@@ -534,11 +478,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
             if (result.success && !result.alreadyCheckedIn) {
                 this.scanCount++;
-                this.showToast(
-                    'Success!',
-                    `${result.registrantName} has been checked in successfully.`,
-                    'success'
-                );
+                this.showToast('Success!', `${result.registrantName} has been checked in successfully.`, 'success');
                 // Refresh total attended count
                 await this.refreshTotalAttendedCount();
             }
@@ -549,11 +489,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         } catch (error) {
             console.error('Error during check-in:', error);
-            this.showToast(
-                'Error',
-                'An unexpected error occurred. Please try again.',
-                'error'
-            );
+            this.showToast('Error', 'An unexpected error occurred. Please try again.', 'error');
         } finally {
             this.isProcessing = false;
         }
@@ -580,11 +516,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             });
 
             if (result.success) {
-                this.showToast(
-                    'Check-In Undone',
-                    `${result.registrantName} has been reverted to Registered status.`,
-                    'success'
-                );
+                this.showToast('Check-In Undone', `${result.registrantName} has been reverted to Registered status.`, 'success');
 
                 // Decrement scan count if it was from this session
                 if (this.scanCount > 0) {
@@ -603,33 +535,15 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         } catch (error) {
             console.error('Error undoing check-in:', error);
-            this.showToast(
-                'Error',
-                'An unexpected error occurred. Please try again.',
-                'error'
-            );
+            this.showToast('Error', 'An unexpected error occurred. Please try again.', 'error');
         } finally {
             this.isProcessing = false;
         }
     }
 
-    handleClearInput() {
-        this.qrCodeInput = '';
-        this.showResult = false;
-        this.lastCheckinResult = null;
-
-        const inputField = this.template.querySelector('lightning-input');
-        if (inputField) {
-            inputField.focus();
-        }
-    }
-
     showToast(title, message, variant) {
         const event = new ShowToastEvent({
-            title: title,
-            message: message,
-            variant: variant,
-            mode: variant === 'error' ? 'sticky' : 'dismissable'
+            title: title, message: message, variant: variant, mode: variant === 'error' ? 'sticky' : 'dismissable'
         });
         this.dispatchEvent(event);
     }
@@ -653,9 +567,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
-        if ((!this.firstName || this.firstName.trim() === '') &&
-            (!this.lastName || this.lastName.trim() === '') &&
-            (!this.email || this.email.trim() === '')) {
+        if ((!this.firstName || this.firstName.trim() === '') && (!this.lastName || this.lastName.trim() === '') && (!this.email || this.email.trim() === '')) {
             this.showToast('Search Required', 'Please enter at least first name, last name, or email', 'warning');
             return;
         }
@@ -749,14 +661,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
         return this.hasSearchResults && this.totalPages > 1;
     }
 
-    get hasPreviousPage() {
-        return this.currentPage > 1;
-    }
-
-    get hasNextPage() {
-        return this.currentPage < this.totalPages;
-    }
-
     get isOnFirstPage() {
         return this.currentPage === 1;
     }
@@ -783,28 +687,12 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
     }
 
-    get resultIcon() {
-        if (!this.lastCheckinResult) return 'utility:info';
-
-        if (this.lastCheckinResult.success && !this.lastCheckinResult.alreadyCheckedIn) {
-            return 'utility:success';
-        } else if (this.lastCheckinResult.alreadyCheckedIn) {
-            return 'utility:warning';
-        } else {
-            return 'utility:error';
-        }
-    }
-
     get hasPendingCheckin() {
         return this.showResult && this.pendingCheckin !== null;
     }
 
     get hasCompletedCheckin() {
         return this.lastCheckinResult !== null && this.pendingCheckin === null;
-    }
-
-    get hasResults() {
-        return this.showResult && this.lastCheckinResult;
     }
 
     get showSessionControls() {
@@ -817,10 +705,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     get sessionDuration() {
         return this.getSessionDuration();
-    }
-
-    get isMobileDevice() {
-        return !this.scanButtonDisabled;
     }
 
     get selectedInstanceUrl() {

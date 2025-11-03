@@ -8,6 +8,30 @@ A comprehensive event check-in solution for Salesforce Summit Events App with sm
 
 ## 🚀 Quick Start
 
+### For Developers (CumulusCI - Recommended)
+
+This project uses **CumulusCI** to automatically install the Summit Events App dependency:
+
+```bash
+# Install CumulusCI
+pip install cumulusci
+
+# Create a dev org with everything configured
+cci flow run dev_org --org dev
+
+# Open the org
+cci org browser dev
+
+# Enable Lightning Web Security for camera scanning
+# Setup → Session Settings → Enable LWS
+```
+
+**See:** [Developer Setup Guide](docs/DEVELOPER-SETUP.md) for complete CumulusCI workflow
+
+### For Direct Deployment (Without Dependencies)
+
+If Summit Events App is already installed in your org:
+
 ```bash
 # Deploy the code
 sf project deploy start --source-dir force-app/main/default/classes --wait 10
@@ -48,10 +72,20 @@ sf apex run test --class-names summitEventsCheckinTest --code-coverage --result-
 ### 📅 Event Instance Selection
 - **Date picker** - Filter events by date
 - **Dynamic dropdowns** - Shows relevant instances only
-- **Validation** - Must select before starting
-
+### For Developers
+- **[Developer Setup Guide](docs/DEVELOPER-SETUP.md)** ⭐ - CumulusCI workflow & dependency management
+- **[LWS Enablement Guide](docs/LWS-ENABLEMENT-GUIDE.md)** - Enable camera scanning
 ---
 
+### For Administrators
+- **[V1.0 Release Notes](docs/V0.1-RELEASE-NOTES.md)** - Complete feature list & installation
+
+- **[LWS Enablement Guide](docs/LWS-ENABLEMENT-GUIDE.md)** - Enable Lightning Web Security
+
+### For Users
+- **[Quick Start Guide](docs/QUICK-START.md)** - Get started in 2 minutes
+- **[User Guide](docs/USER-GUIDE.md)** - Complete usage instructions
+- **[Camera Troubleshooting](docs/CAMERA-TROUBLESHOOTING.md)** - Fix camera issues
 ## 📦 What's Included
 
 ```
@@ -76,6 +110,43 @@ force-app/main/default/
 - **[User Guide](docs/USER-GUIDE.md)** - How to use the component
 - **[Architecture](docs/ARCHITECTURE.md)** - Technical documentation
 - **[Deployment Guide](DEPLOYMENT_ORDER.md)** - Step-by-step deployment
+
+---
+
+## 📋 Requirements & Dependencies
+
+### Required
+- **Salesforce:** Spring '22 (API v54.0) or later
+- **Summit Events App:** Latest version from [SFDO-Community/Summit-Events-App](https://github.com/SFDO-Community/Summit-Events-App)
+  - This is the parent application that manages events and registrations
+  - **CumulusCI automatically installs this dependency** when you run `cci flow run dev_org`
+
+### Optional (for best experience)
+- **Lightning Web Security (LWS):** For browser camera scanning
+  - Without LWS: Camera blocked (use mobile app or manual search)
+  - With LWS: Camera works on desktop and mobile browsers
+  - See [LWS Enablement Guide](docs/LWS-ENABLEMENT-GUIDE.md)
+
+### Development Tools
+- **CumulusCI:** For automated dependency management and deployment
+- **Python 3.8+:** Required for CumulusCI
+- **Salesforce CLI:** For org management
+- **Dev Hub:** For scratch org creation
+
+### How Dependencies Are Handled
+
+**With CumulusCI (Recommended):**
+```yaml
+# Defined in cumulusci.yml
+dependencies:
+  - github: 'https://github.com/SFDO-Community/Summit-Events-App.git'
+```
+CumulusCI automatically downloads and installs Summit Events App before deploying this component.
+
+**Manual Installation:**
+1. Install Summit Events App first (from GitHub or AppExchange)
+2. Deploy this check-in component
+3. Configure permissions and settings
 
 ---
 
@@ -122,6 +193,28 @@ force-app/main/default/
 - Modern browser (Chrome 83+, Firefox 78+, Edge 83+, Safari 14+)
 - Camera permission (for camera scanning)
 - Object permissions: Summit Events Registration (Read, Edit)
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! This project uses **CumulusCI** for development and dependency management.
+
+**GitHub Repository:** [https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in](https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in)
+
+```bash
+# Quick start for contributors
+git clone https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in.git
+cd Summit-Events-App-QR-Code-Check-in
+pip install cumulusci
+cci flow run dev_org --org dev
+```
+
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+- Development environment setup
+- Code standards and testing requirements
+- Pull request process
+- CumulusCI workflow
 
 ---
 

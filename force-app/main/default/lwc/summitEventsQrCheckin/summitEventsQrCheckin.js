@@ -66,19 +66,53 @@ export default class SummitEventsQrCheckin extends LightningElement {
         console.log('  - Protocol:', window.location.protocol);
         console.log('  - Secure context:', window.isSecureContext);
         console.log('  - navigator.mediaDevices:', !!navigator.mediaDevices);
+        console.log('  - window.navigator.mediaDevices:', !!(window.navigator && window.navigator.mediaDevices));
         console.log('  - getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
 
-        if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Try to get mediaDevices from different sources (Locker Service workaround)
+        const mediaDevices = this.getMediaDevices();
+        console.log('  - mediaDevices via workaround:', !!mediaDevices);
+
+        if (window.isSecureContext && mediaDevices && mediaDevices.getUserMedia) {
             console.log('✅ Camera support detected');
         } else {
             console.warn('⚠️ Camera support not available');
             if (!window.isSecureContext) {
                 console.warn('  - Reason: Not a secure context (requires HTTPS)');
             }
-            if (!navigator.mediaDevices) {
-                console.warn('  - Reason: navigator.mediaDevices not available');
+            if (!mediaDevices) {
+                console.warn('  - Reason: navigator.mediaDevices not available (may be blocked by Locker Service/LWS)');
             }
         }
+    }
+
+    getMediaDevices() {
+        // Try multiple ways to access mediaDevices (Locker Service workaround)
+        try {
+            if (navigator.mediaDevices) {
+                return navigator.mediaDevices;
+            }
+            if (window.navigator && window.navigator.mediaDevices) {
+                return window.navigator.mediaDevices;
+            }
+            // Legacy API fallback
+            if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+                console.log('Using legacy getUserMedia API');
+                return {
+                    getUserMedia: function(constraints) {
+                        const legacyGetUserMedia = navigator.getUserMedia ||
+                                                   navigator.webkitGetUserMedia ||
+                                                   navigator.mozGetUserMedia;
+                        return new Promise((resolve, reject) => {
+                            legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+                        });
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Error accessing mediaDevices:', error);
+        }
+        return null;
     }
 
     disconnectedCallback() {
@@ -271,24 +305,28 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
-        // Check for mediaDevices API
-        if (!navigator.mediaDevices) {
+        // Check for mediaDevices API using workaround for Locker Service
+        const mediaDevices = this.getMediaDevices();
+
+        if (!mediaDevices) {
             this.showToast(
-                'Camera API Not Available',
-                'Camera API is not available in your browser. Please use manual search.',
-                'error'
+                'Camera Not Available',
+                'Camera requires Lightning Web Security. Ask your admin to enable LWS in Setup → Session Settings, or use manual search.',
+                'warning'
             );
-            console.error('❌ navigator.mediaDevices is not available');
+            console.error('❌ navigator.mediaDevices is not available (blocked by Locker Service)');
+            console.error('ℹ️ Solution: Enable Lightning Web Security in Setup → Session Settings');
+            console.error('ℹ️ Alternative: Use Salesforce Mobile App or manual search');
             return;
         }
 
-        if (!navigator.mediaDevices.getUserMedia) {
+        if (!mediaDevices.getUserMedia) {
             this.showToast(
                 'getUserMedia Not Supported',
-                'Your browser does not support getUserMedia. Please use manual search or try Chrome/Firefox/Edge.',
+                'Your browser does not support camera access. Please use the Salesforce Mobile App or manual search.',
                 'error'
             );
-            console.error('❌ navigator.mediaDevices.getUserMedia is not available');
+            console.error('❌ getUserMedia is not available');
             return;
         }
 
@@ -320,7 +358,13 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 return;
             }
 
-            this.videoStream = await navigator.mediaDevices.getUserMedia({
+            // Use workaround to get mediaDevices
+            const mediaDevices = this.getMediaDevices();
+            if (!mediaDevices) {
+                throw new Error('Camera API not available');
+            }
+
+            this.videoStream = await mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' }
             });
 
@@ -359,6 +403,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 errorMessage += 'Please grant camera permissions in your browser settings.';
             } else if (error.name === 'NotFoundError') {
                 errorMessage += 'No camera found on this device.';
+            } else if (error.message === 'Camera API not available') {
+                errorMessage = 'Camera API is blocked by browser security. Please use manual search or the Salesforce Mobile App.';
             } else {
                 errorMessage += error.message;
             }

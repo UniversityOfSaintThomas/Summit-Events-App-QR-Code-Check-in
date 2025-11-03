@@ -27,6 +27,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
     // Event instance selection properties
     @track selectedDate = '';
     @track selectedInstanceId = '';
+    @track selectedInstanceName = '';
+    @track selectedEventName = '';
     @track instanceOptions = [];
     @track loadingInstances = false;
     @track noInstancesFound = false;
@@ -150,7 +152,11 @@ export default class SummitEventsQrCheckin extends LightningElement {
             if (instances && instances.length > 0) {
                 this.instanceOptions = instances.map(inst => ({
                     label: inst.label,
-                    value: inst.value
+                    value: inst.value,
+                    eventName: inst.eventName,
+                    instanceTitle: inst.instanceTitle,
+                    instanceStartDate: inst.instanceStartDate,
+                    instanceStartTime: inst.instanceStartTime
                 }));
                 this.noInstancesFound = false;
             } else {
@@ -169,6 +175,16 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     handleInstanceChange(event) {
         this.selectedInstanceId = event.target.value;
+
+        // Find the selected instance details
+        const selectedOption = this.instanceOptions.find(opt => opt.value === event.target.value);
+        if (selectedOption) {
+            // Use the separate fields provided by Apex
+            this.selectedInstanceStartDate = selectedOption.instanceStartDate;
+            this.selectedInstanceStartTime = selectedOption.instanceStartTime;
+            this.selectedEventName = selectedOption.eventName;
+            this.selectedInstanceName = selectedOption.instanceTitle;
+        }
     }
 
     async refreshTotalAttendedCount() {
@@ -848,6 +864,13 @@ export default class SummitEventsQrCheckin extends LightningElement {
         return !this.scanButtonDisabled;
     }
 
+    get selectedInstanceUrl() {
+        if (this.selectedInstanceId) {
+            return `/${this.selectedInstanceId}`;
+        }
+        return '#';
+    }
+
     get showInstancePicker() {
         return !this.loadingInstances && this.instanceOptions.length > 0;
     }
@@ -867,6 +890,23 @@ export default class SummitEventsQrCheckin extends LightningElement {
         if (this.pendingCheckin && this.pendingCheckin.instanceStartTime) {
             // Parse the time string (format: HH:mm:ss.SSS or HH:mm:ss)
             const timeStr = this.pendingCheckin.instanceStartTime.toString();
+            const parts = timeStr.split(':');
+            if (parts.length >= 2) {
+                let hours = parseInt(parts[0], 10);
+                const minutes = parts[1];
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 should be 12
+                return `${hours}:${minutes} ${ampm}`;
+            }
+        }
+        return '';
+    }
+
+    get formattedInstanceTime() {
+        if (this.selectedInstanceStartTime) {
+            // Parse the time string (format: HH:mm:ss.SSS or HH:mm:ss)
+            const timeStr = this.selectedInstanceStartTime.toString();
             const parts = timeStr.split(':');
             if (parts.length >= 2) {
                 let hours = parseInt(parts[0], 10);

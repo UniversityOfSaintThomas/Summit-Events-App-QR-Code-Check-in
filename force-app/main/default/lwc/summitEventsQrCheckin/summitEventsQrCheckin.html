@@ -67,38 +67,59 @@
 
             <!-- Active Session View -->
             <template if:true={showActiveSessionControls}>
-                <!-- Session Status Bar -->
-                <div class="session-status-bar slds-m-bottom_medium">
-                    <div class="slds-grid slds-grid_align-spread">
-                        <div class="slds-col">
-                            <span class="status-indicator">
-                                <span class="status-dot active"></span>
-                                <span class="slds-text-body_small">Session Active</span>
-                            </span>
+
+                <!-- Selected Event and Instance Display with Counters -->
+                <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                    <!-- Event/Instance Header with Link -->
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                <lightning-icon icon-name="standard:event" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                <div class="slds-text-heading_small slds-truncate">
+                                    {selectedEventName}
+                                </div>
+                            </div>
+                            <div class="slds-text-body_small slds-text-color_weak slds-m-left_large slds-m-bottom_xx-small">
+                                <lightning-icon icon-name="utility:event" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                {selectedInstanceName}
+                            </div>
+                            <template if:true={selectedInstanceStartDate}>
+                                <div class="slds-text-body_small slds-text-color_weak slds-m-left_large">
+                                    <lightning-icon icon-name="utility:date_time" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                    <lightning-formatted-date-time
+                                            value={selectedInstanceStartDate}
+                                            year="numeric"
+                                            month="short"
+                                            day="numeric">
+                                    </lightning-formatted-date-time>
+                                    <template if:true={formattedInstanceTime}>
+                                        at {formattedInstanceTime}
+                                    </template>
+                                </div>
+                            </template>
                         </div>
-                        <div class="slds-col slds-text-align_right">
-                            <span class="slds-text-body_small slds-text-color_weak">
-                                Duration: {sessionDuration}
-                            </span>
+                        <div class="slds-col slds-no-flex">
+                            <a href={selectedInstanceUrl} target="_blank" rel="noopener noreferrer" class="slds-button slds-button_neutral slds-button_small">
+                                <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                View Instance
+                            </a>
                         </div>
                     </div>
-                </div>
 
-                <!-- Scan Count Display -->
-                <div class="slds-m-bottom_medium">
-                    <div class="slds-grid slds-gutters slds-grid_align-center">
+                    <!-- Session Counters Inside Panel -->
+                    <div class="slds-grid slds-gutters slds-m-top_small">
                         <!-- Session Count -->
-                        <div class="slds-col slds-text-align_center">
-                            <div class="slds-box slds-box_x-small slds-theme_default">
-                                <lightning-icon icon-name="utility:clock" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+                        <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                            <div class="slds-box slds-box_xx-small slds-theme_default">
+                                <lightning-icon icon-name="utility:clock" size="small" class="slds-m-bottom_xx-small"></lightning-icon>
                                 <div class="slds-text-heading_medium">{scanCount}</div>
                                 <div class="slds-text-body_small slds-text-color_weak">This Session</div>
                             </div>
                         </div>
                         <!-- Total Attended -->
-                        <div class="slds-col slds-text-align_center">
-                            <div class="slds-box slds-box_x-small slds-theme_success">
-                                <lightning-icon icon-name="utility:success" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+                        <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                            <div class="slds-box slds-box_xx-small slds-theme_success">
+                                <lightning-icon icon-name="utility:success" size="small" class="slds-m-bottom_xx-small"></lightning-icon>
                                 <div class="slds-text-heading_medium">{totalAttendedCount}</div>
                                 <div class="slds-text-body_small">Total Attended</div>
                             </div>
@@ -424,32 +445,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons (removed Check In button as it's not needed anymore) -->
-                <div class="slds-grid slds-gutters slds-m-bottom_medium">
-                    <div class="slds-col">
-                        <lightning-button-menu
-                                alternative-text="Session options"
-                                icon-size="x-small"
-                                menu-alignment="right"
-                                variant="border-filled"
-                                label="Session"
-                        >
-                            <lightning-menu-item
-                                    value="reset"
-                                    label="Reset Counter"
-                                    icon-name="utility:refresh"
-                                    onclick={handleResetSession}
-                            ></lightning-menu-item>
-                            <lightning-menu-item
-                                    value="stop"
-                                    label="End Session"
-                                    icon-name="utility:stop"
-                                    onclick={handleStopSession}
-                            ></lightning-menu-item>
-                        </lightning-button-menu>
-                    </div>
-                </div>
-
                 <!-- Processing Spinner -->
                 <template if:true={isProcessing}>
                     <div class="slds-m-vertical_medium slds-text-align_center">
@@ -495,5 +490,37 @@
 
             </template>
         </div>
+
+        <!-- Footer with Session Status Bar and Actions (only show when session is active) -->
+        <template if:true={showActiveSessionControls}>
+            <div slot="footer">
+                <!-- Session Status -->
+                <div class="slds-size_1-of-1 slds-text-align_center">
+                            <span class="status-indicator">
+                                <span class="status-dot active"></span>
+                                <span class="slds-text-body_small">Session Active</span>
+                            </span>
+                    <span class="slds-text-body_small slds-text-color_weak slds-m-left_medium">
+                                Duration: {sessionDuration}
+                            </span>
+                </div>
+                <!-- Action Buttons -->
+                <div class="slds-size_1-of-1 slds-m-top_small slds-text-align_center">
+                    <lightning-button
+                            label="Reset Counter"
+                            icon-name="utility:refresh"
+                            onclick={handleResetSession}
+                            variant="neutral"
+                            class="slds-m-right_x-small"
+                    ></lightning-button>
+                    <lightning-button
+                            label="End Session"
+                            icon-name="utility:stop"
+                            onclick={handleStopSession}
+                            variant="destructive"
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
     </lightning-card>
 </template>

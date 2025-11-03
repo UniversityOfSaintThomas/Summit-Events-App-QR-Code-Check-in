@@ -58,6 +58,27 @@ export default class SummitEventsQrCheckin extends LightningElement {
             console.info('BarcodeScanner unavailable. Non-mobile device? Using manual input mode.');
         }
         this.loadJsQRLibrary();
+        this.checkCameraSupport();
+    }
+
+    checkCameraSupport() {
+        console.log('🔍 Checking camera support...');
+        console.log('  - Protocol:', window.location.protocol);
+        console.log('  - Secure context:', window.isSecureContext);
+        console.log('  - navigator.mediaDevices:', !!navigator.mediaDevices);
+        console.log('  - getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+
+        if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            console.log('✅ Camera support detected');
+        } else {
+            console.warn('⚠️ Camera support not available');
+            if (!window.isSecureContext) {
+                console.warn('  - Reason: Not a secure context (requires HTTPS)');
+            }
+            if (!navigator.mediaDevices) {
+                console.warn('  - Reason: navigator.mediaDevices not available');
+            }
+        }
     }
 
     disconnectedCallback() {
@@ -215,6 +236,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     async handleBrowserCameraScan() {
+        console.log('🎥 Camera scan initiated');
+        console.log('Session active:', this.sessionActive);
+        console.log('Secure context:', window.isSecureContext);
+        console.log('navigator.mediaDevices available:', !!navigator.mediaDevices);
+        console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+        console.log('jsQR loaded:', this.jsQRLoaded);
+        console.log('jsQR library:', !!this.jsQRLibrary);
+
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
             return;
@@ -231,12 +260,35 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
 
         // On desktop/browser - use jsQR camera
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        // Check if running in secure context (HTTPS or localhost)
+        if (!window.isSecureContext) {
             this.showToast(
-                'Camera Not Supported',
-                'Your browser does not support camera access. Please use a modern browser like Chrome, Firefox, or Edge.',
+                'Secure Connection Required',
+                'Camera access requires HTTPS. Please access this page via HTTPS or use manual search.',
                 'error'
             );
+            console.error('❌ Camera requires secure context (HTTPS). Current protocol:', window.location.protocol);
+            return;
+        }
+
+        // Check for mediaDevices API
+        if (!navigator.mediaDevices) {
+            this.showToast(
+                'Camera API Not Available',
+                'Camera API is not available in your browser. Please use manual search.',
+                'error'
+            );
+            console.error('❌ navigator.mediaDevices is not available');
+            return;
+        }
+
+        if (!navigator.mediaDevices.getUserMedia) {
+            this.showToast(
+                'getUserMedia Not Supported',
+                'Your browser does not support getUserMedia. Please use manual search or try Chrome/Firefox/Edge.',
+                'error'
+            );
+            console.error('❌ navigator.mediaDevices.getUserMedia is not available');
             return;
         }
 
@@ -246,9 +298,11 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 'QR code scanner is still loading. Please try again in a moment.',
                 'info'
             );
+            console.warn('⚠️ jsQR library not loaded yet');
             return;
         }
 
+        console.log('✅ All checks passed - starting camera scanner');
         this.showCameraScanner = true;
 
         setTimeout(() => {

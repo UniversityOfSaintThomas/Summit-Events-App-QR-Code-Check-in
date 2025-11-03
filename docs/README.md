@@ -2,6 +2,55 @@
 
 **Version 0.1** | Complete Documentation Suite
 
+**Repository:** [https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in](https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in)
+
+---
+
+## 📦 Installation
+
+**For Administrators & End Users:**
+
+Install the latest unlocked package from GitHub Releases:
+
+👉 **[View Latest Release & Installation Instructions](https://github.com/UniversityOfSaintThomas/Summit-Events-App-QR-Code-Check-in/releases)**
+
+**For Developers:**
+
+See [Developer Setup Guide](DEVELOPER-SETUP.md) for CumulusCI-based development workflow.
+
+---
+
+## 🎉 NEW: Camera Scanning Works with Lightning Web Security!
+
+**Enable browser camera scanning by turning on Lightning Web Security:**
+
+1. **Setup → Session Settings**
+2. Enable **"Lightning Web Security for Lightning Experience"**
+3. Enable **"Use Lightning Web Security for Lightning components in Experience Builder sites"**
+### **[Installation Guide - Unlocked Package](INSTALLATION-PACKAGE.md)** ⭐
+**Complete installation instructions for administrators**
+
+- Prerequisites and requirements
+- Step-by-step installation from GitHub Releases
+- Package installation wizard walkthrough
+- Post-installation setup (LWS, permissions)
+- Upgrading to newer versions
+- Troubleshooting installation issues
+- Uninstallation process
+- Best practices for deployment
+
+**Audience:** Salesforce administrators, deployment managers  
+**Length:** Complete installation guide  
+**Use when:** Installing or upgrading the package in any org
+
+---
+
+4. **Save** - Camera now works in Chrome, Firefox, Edge! 📷
+
+👉 **[Full LWS Guide & Setup Instructions](LOCKER-SERVICE-CAMERA-ISSUE.md)**
+
+Without LWS enabled, camera is blocked by Locker Service (older security model). With LWS enabled, camera works on desktop and mobile browsers!
+
 ---
 
 ## 📚 Documentation Overview
@@ -11,6 +60,57 @@ This folder contains comprehensive documentation for the Summit Events QR Check-
 ---
 
 ## 📖 Available Documentation
+
+### **NEW: [Developer Setup Guide - CumulusCI](DEVELOPER-SETUP.md)** ⭐
+**Complete development workflow with dependency management**
+
+- What is CumulusCI and why use it
+- Initial setup (Python, CumulusCI, Salesforce CLI)
+- Creating scratch orgs with dependencies pre-installed
+- Development workflows and best practices
+- Custom tasks and flows
+- Automatic Summit Events App installation
+- Testing and CI/CD integration
+- Troubleshooting common issues
+- Quick reference commands
+
+**Audience:** Developers, DevOps engineers  
+**Length:** Comprehensive guide  
+**Use when:** Setting up development environment, need CumulusCI workflow
+
+---
+
+### **NEW: [Lightning Web Security & Camera Access](LOCKER-SERVICE-CAMERA-ISSUE.md)** ⭐
+**How to enable camera scanning**
+
+- Why camera doesn't work by default
+- How to enable Lightning Web Security
+- Testing camera after enabling LWS
+- Fallback options if LWS cannot be enabled
+- Technical explanation
+- Testing matrix
+
+**Audience:** Salesforce admins, technical users  
+**Length:** Comprehensive technical guide  
+**Use when:** Camera scanning not working, need to enable browser camera
+
+---
+
+### **NEW: [Quick Start Guide](QUICK-START.md)** ⭐
+**Get started in 2 minutes**
+
+- All 4 check-in methods explained
+- LWS camera setup (quick version)
+- Manual search instructions
+- Mobile app instructions
+- USB scanner instructions
+- Troubleshooting tips
+
+**Audience:** All users  
+**Length:** Quick reference  
+**Use when:** Need fast answers, first-time setup
+
+---
 
 ### 1. **[V0.1 Release Notes](V0.1-RELEASE-NOTES.md)**
 **Start here for a complete overview**

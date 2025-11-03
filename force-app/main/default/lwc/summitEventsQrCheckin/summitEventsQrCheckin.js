@@ -62,32 +62,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
             console.info('BarcodeScanner unavailable. Non-mobile device? Using manual input mode.');
         }
         this.loadJsQRLibrary();
-        this.checkCameraSupport();
-    }
-
-    checkCameraSupport() {
-        console.log('🔍 Checking camera support...');
-        console.log('  - Protocol:', window.location.protocol);
-        console.log('  - Secure context:', window.isSecureContext);
-        console.log('  - navigator.mediaDevices:', !!navigator.mediaDevices);
-        console.log('  - window.navigator.mediaDevices:', !!(window.navigator && window.navigator.mediaDevices));
-        console.log('  - getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
-
-        // Try to get mediaDevices from different sources (Locker Service workaround)
-        const mediaDevices = this.getMediaDevices();
-        console.log('  - mediaDevices via workaround:', !!mediaDevices);
-
-        if (window.isSecureContext && mediaDevices && mediaDevices.getUserMedia) {
-            console.log('✅ Camera support detected');
-        } else {
-            console.warn('⚠️ Camera support not available');
-            if (!window.isSecureContext) {
-                console.warn('  - Reason: Not a secure context (requires HTTPS)');
-            }
-            if (!mediaDevices) {
-                console.warn('  - Reason: navigator.mediaDevices not available (may be blocked by Locker Service/LWS)');
-            }
-        }
     }
 
     getMediaDevices() {
@@ -101,7 +75,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
             }
             // Legacy API fallback
             if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
-                console.log('Using legacy getUserMedia API');
                 return {
                     getUserMedia: function(constraints) {
                         const legacyGetUserMedia = navigator.getUserMedia ||
@@ -125,11 +98,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     async loadJsQRLibrary() {
         try {
-            console.log('Loading jsQR library from static resource...');
             await loadScript(this, jsQR);
             this.jsQRLibrary = window.jsQR;
             this.jsQRLoaded = true;
-            console.log('✅ jsQR library loaded successfully from static resource');
         } catch (error) {
             console.error('❌ Error loading jsQR library:', error);
             this.jsQRLoaded = false;
@@ -265,7 +236,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
             this.myScanner.beginCapture(scanningOptions)
                 .then((result) => {
-                    console.log('Scanned value: ' + result.value);
                     this.qrCodeInput = result.value;
                     this.handleCheckIn();
                 })
@@ -276,7 +246,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
                     }
                 })
                 .finally(() => {
-                    console.log('Scanning finished.');
                     this.myScanner.endCapture();
                 });
         } else {
@@ -289,13 +258,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     async handleBrowserCameraScan() {
-        console.log('🎥 Camera scan initiated');
-        console.log('Session active:', this.sessionActive);
-        console.log('Secure context:', window.isSecureContext);
-        console.log('navigator.mediaDevices available:', !!navigator.mediaDevices);
-        console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
-        console.log('jsQR loaded:', this.jsQRLoaded);
-        console.log('jsQR library:', !!this.jsQRLibrary);
 
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
@@ -307,7 +269,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         if (isSalesforceMobile) {
             // On Salesforce Mobile App - use native scanner
-            console.log('Detected Salesforce Mobile App - using native scanner');
             this.handleScanWithCamera();
             return;
         }
@@ -359,7 +320,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
-        console.log('✅ All checks passed - starting camera scanner');
         this.showCameraScanner = true;
 
         setTimeout(() => {
@@ -405,7 +365,6 @@ export default class SummitEventsQrCheckin extends LightningElement {
                     });
 
                     if (code) {
-                        console.log('QR Code detected:', code.data);
                         this.qrCodeInput = code.data;
                         this.handleCloseCameraScanner();
                         this.handleCheckIn();
@@ -735,11 +694,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
         const registrationId = event.currentTarget.dataset.id;
 
         if (!registrationId) {
-            console.log('No registration ID found in click event');
             return;
         }
-
-        console.log('Registration selected:', registrationId);
 
         // Clear search results and reset search form
         this.searchResults = [];

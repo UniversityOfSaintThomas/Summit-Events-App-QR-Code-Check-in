@@ -220,32 +220,31 @@
                         <!-- Pending Check-In Card (Registration Found - Awaiting Confirmation) -->
                         <template if:true={hasPendingCheckin}>
                             <div class="slds-box slds-theme_default slds-m-bottom_medium slds-m-top_medium">
-                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                <div class="slds-grid slds-grid_vertical-align-left slds-m-bottom_small">
                                     <div class="slds-col slds-size_1-of-12">
                                         <lightning-icon
                                                 icon-name="utility:user"
                                                 size="medium"
-                                                variant="default"
                                         ></lightning-icon>
                                     </div>
-                                    <div class="slds-col slds-size_11-of-12">
-                                        <div class="slds-text-heading_small slds-m-bottom_x-small">
+                                    <div class="slds-col slds-size_11-of-12 slds-text-align_left">
+                                        <div class="slds-text-heading_small slds-text-color_success slds-m-bottom_x-small">
                                             Registration Found
                                         </div>
                                         <div class="slds-text-body_regular slds-m-bottom_xx-small">
-                                            <strong>Name:</strong> {pendingCheckin.registrantName}
+                                            <strong>Name: </strong> {pendingCheckin.registrantName}
                                         </div>
                                         <div class="slds-text-body_small slds-m-bottom_xx-small">
-                                            <strong>Event:</strong> {pendingCheckin.eventName}
+                                            <strong>Event: </strong> {pendingCheckin.eventName}
                                         </div>
                                         <template if:true={pendingCheckin.instanceTitle}>
                                             <div class="slds-text-body_small slds-m-bottom_xx-small">
-                                                <strong>Instance:</strong> {pendingCheckin.instanceTitle}
+                                                <strong>Instance: </strong> {pendingCheckin.instanceTitle}
                                             </div>
                                         </template>
                                         <template if:true={pendingCheckin.instanceStartDate}>
                                             <div class="slds-text-body_small slds-m-bottom_xx-small">
-                                                <strong>Event Date:</strong>
+                                                <strong>Event Date: </strong>
                                                 <lightning-formatted-date-time value={pendingCheckin.instanceStartDate} year="numeric" month="short" day="numeric"></lightning-formatted-date-time>
                                                 <template if:true={formattedEventTime}>
                                                     at {formattedEventTime}
@@ -260,7 +259,10 @@
                                         </div>
                                         <template if:true={pendingCheckin.alreadyCheckedIn}>
                                             <div class="slds-m-top_small">
-                                                <lightning-badge label="Already Checked In" variant="warning"></lightning-badge>
+                                                <span class="slds-badge slds-theme_warning">
+                                                    <lightning-icon icon-name="utility:warning" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                    Already Checked In
+                                                </span>
                                             </div>
                                         </template>
                                     </div>
@@ -358,10 +360,16 @@
                                                 </div>
                                                 <div class="slds-col slds-no-flex">
                                                     <template if:true={registration.isCheckedIn}>
-                                                        <lightning-badge label="Checked In" variant="success" icon-name="utility:check" class="badge-checked-in"></lightning-badge>
+                                                        <span class="slds-badge slds-theme_success">
+                                                            <lightning-icon icon-name="utility:check" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                            Checked In
+                                                        </span>
                                                     </template>
                                                     <template if:false={registration.isCheckedIn}>
-                                                        <lightning-badge label={registration.status} icon-name="utility:steps" class="badge-check-in"></lightning-badge>
+                                                        <span class="slds-badge">
+                                                            <lightning-icon icon-name="utility:steps" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                            {registration.status}
+                                                        </span>
                                                     </template>
                                                 </div>
                                             </div>

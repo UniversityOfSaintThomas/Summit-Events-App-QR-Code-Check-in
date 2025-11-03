@@ -116,9 +116,30 @@
     overflow-y: auto;
 }
 
-.badge-check-in {
-    border-color: #2e844a;
+/* Custom badge styles with icons */
+.slds-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: 0.25rem;
+    background-color: #ecebea;
+    color: #181818;
+}
+
+.slds-badge.slds-theme_success {
+    background-color: #d9f0d9;
     color: #2e844a;
-    font-weight: bold;
-    background-color: #ffffff;
+}
+
+.slds-badge.slds-theme_warning {
+    background-color: #fef3cd;
+    color: #826a00;
+}
+
+.slds-badge lightning-icon {
+    vertical-align: middle;
 }

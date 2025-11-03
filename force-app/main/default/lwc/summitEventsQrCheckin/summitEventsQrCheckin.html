@@ -80,7 +80,6 @@
                                 </div>
                             </div>
                             <div class="slds-text-body_small slds-text-color_weak slds-m-left_large slds-m-bottom_xx-small">
-                                <lightning-icon icon-name="utility:event" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
                                 {selectedInstanceName}
                             </div>
                             <template if:true={selectedInstanceStartDate}>
@@ -90,10 +89,11 @@
                                             value={selectedInstanceStartDate}
                                             year="numeric"
                                             month="short"
-                                            day="numeric">
+                                            day="numeric"
+                                            >
                                     </lightning-formatted-date-time>
                                     <template if:true={formattedInstanceTime}>
-                                        at {formattedInstanceTime}
+                                       &nbsp;at {formattedInstanceTime}
                                     </template>
                                 </div>
                             </template>

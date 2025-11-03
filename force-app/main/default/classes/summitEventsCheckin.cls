@@ -66,6 +66,8 @@ public with sharing class summitEventsCheckin {
                 option.label = instance.summit__Event__r.Name + ' - ' + instance.summit__Instance_Title__c;
                 option.eventName = instance.summit__Event__r.Name;
                 option.instanceTitle = instance.summit__Instance_Title__c;
+                option.instanceStartDate = instance.summit__Instance_Start_Date__c;
+                option.instanceStartTime = instance.summit__Instance_Start_Time__c;
                 options.add(option);
             }
 
@@ -448,12 +450,16 @@ public with sharing class summitEventsCheckin {
         @AuraEnabled public String label;
         @AuraEnabled public String eventName;
         @AuraEnabled public String instanceTitle;
+        @AuraEnabled public Date instanceStartDate;
+        @AuraEnabled public Time instanceStartTime;
 
         public EventInstanceOption() {
             this.value = '';
             this.label = '';
             this.eventName = '';
             this.instanceTitle = '';
+            this.instanceStartDate = null;
+            this.instanceStartTime = null;
         }
     }
 

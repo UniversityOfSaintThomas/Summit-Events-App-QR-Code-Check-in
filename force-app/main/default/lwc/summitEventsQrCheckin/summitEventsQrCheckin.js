@@ -29,6 +29,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
     @track selectedInstanceId = '';
     @track selectedInstanceName = '';
     @track selectedEventName = '';
+    @track selectedInstanceStartDate = null;
+    @track selectedInstanceStartTime = null;
     @track instanceOptions = [];
     @track loadingInstances = false;
     @track noInstancesFound = false;
@@ -178,6 +180,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         // Find the selected instance details
         const selectedOption = this.instanceOptions.find(opt => opt.value === event.target.value);
+
         if (selectedOption) {
             // Use the separate fields provided by Apex
             this.selectedInstanceStartDate = selectedOption.instanceStartDate;
@@ -904,19 +907,39 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     get formattedInstanceTime() {
-        if (this.selectedInstanceStartTime) {
-            // Parse the time string (format: HH:mm:ss.SSS or HH:mm:ss)
+        if (!this.selectedInstanceStartTime && this.selectedInstanceStartTime !== 0) {
+            return '';
+        }
+
+        try {
+            // Salesforce Time is serialized as milliseconds from midnight (numeric)
+            // Check if it's a number first
+            if (typeof this.selectedInstanceStartTime === 'number') {
+                const totalMilliseconds = this.selectedInstanceStartTime;
+                const hours = Math.floor(totalMilliseconds / 3600000);
+                const minutes = Math.floor((totalMilliseconds % 3600000) / 60000);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                const displayMinutes = minutes.toString().padStart(2, '0');
+                return `${displayHours}:${displayMinutes} ${ampm}`;
+            }
+
+            // Fallback: Parse as time string (format: HH:mm:ss.SSS or HH:mm:ss)
             const timeStr = this.selectedInstanceStartTime.toString();
             const parts = timeStr.split(':');
+
             if (parts.length >= 2) {
                 let hours = parseInt(parts[0], 10);
-                const minutes = parts[1];
+                const minutes = parts[1].padStart(2, '0');
                 const ampm = hours >= 12 ? 'PM' : 'AM';
                 hours = hours % 12;
                 hours = hours ? hours : 12; // 0 should be 12
                 return `${hours}:${minutes} ${ampm}`;
             }
+        } catch (error) {
+            console.error('Error formatting instance time:', error);
         }
+
         return '';
     }
 }

@@ -1,6 +1,11 @@
 {
   "orgName": "Summit-Evetns-App-Checkin - Dev Org",
   "edition": "Developer",
+  "features": [
+    "Communities",
+    "Sites",
+    "SiteDotCom"
+  ],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true

@@ -75,3 +75,5 @@ robot/Summit-Evetns-App-Checkin/results/
 *.iml
 .project
 .settings
+
+**/graphql.config.yml

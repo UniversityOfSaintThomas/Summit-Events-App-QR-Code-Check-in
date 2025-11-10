@@ -67,23 +67,19 @@
 
             <!-- Active Session View -->
             <template if:true={showActiveSessionControls}>
-
                 <!-- Selected Event and Instance Display with Counters -->
-                <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                <div class="slds-m-bottom_medium">
                     <!-- Event/Instance Header with Link -->
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
-                        <div class="slds-col slds-has-flexi-truncate">
-                            <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
-                                <lightning-icon icon-name="standard:event" size="small" class="slds-m-right_x-small"></lightning-icon>
-                                <div class="slds-text-heading_small slds-truncate">
-                                    {selectedEventName}
-                                </div>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small slds-border_bottom">
+                        <div class="slds-col">
+                            <div class="slds-text-heading_regular">
+                                {selectedEventName}
                             </div>
-                            <div class="slds-text-body_small slds-text-color_weak slds-m-left_large slds-m-bottom_xx-small">
+                            <div class="slds-text-body_regular slds-m-bottom_xx-small">
                                 {selectedInstanceName}
                             </div>
                             <template if:true={selectedInstanceStartDate}>
-                                <div class="slds-text-body_small slds-text-color_weak slds-m-left_large">
+                                <div class="slds-text-body_regular">
                                     <lightning-icon icon-name="utility:date_time" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
                                     <lightning-formatted-date-time
                                             value={selectedInstanceStartDate}
@@ -97,9 +93,7 @@
                                     </template>
                                 </div>
                             </template>
-                        </div>
-                        <div class="slds-col slds-no-flex">
-                            <a href={selectedInstanceUrl} target="_blank" rel="noopener noreferrer" class="slds-button slds-button_neutral slds-button_small">
+                            <a href={selectedInstanceUrl} target="_blank" rel="noopener noreferrer" class="slds-button slds-button_neutral slds-button_small slds-m-top_x-small slds-m-bottom_small">
                                 <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
                                 View Instance
                             </a>
@@ -107,57 +101,46 @@
                     </div>
 
                     <!-- Session Counters Inside Panel -->
-                    <div class="slds-grid slds-gutters slds-m-top_small">
+                    <div class="slds-grid slds-gutters slds-gutters_xx-small slds-m-top_small slds-text-align_center">
                         <!-- Session Count -->
                         <div class="slds-col slds-size_1-of-3">
                             <div class="slds-box slds-box_xx-small slds-theme_default">
-                                <div class="slds-media slds-media_center">
-                                    <div class="slds-media__figure">
-                                        <lightning-icon icon-name="utility:clock" size="small"></lightning-icon>
-                                    </div>
-                                    <div class="slds-media__body">
-                                        <div class="slds-text-heading_medium">{scanCount}</div>
-                                        <div class="slds-text-body_small slds-text-color_weak">This Session</div>
-                                    </div>
+                                <div class="slds-text-heading_medium">
+                                    <lightning-icon icon-name="utility:clock" size="small" class="slds-m-right_xx-small"></lightning-icon>
+                                    {scanCount}
                                 </div>
+                                <div class="slds-text-body_small">Session</div>
                             </div>
                         </div>
                         <!-- Total Attended -->
                         <div class="slds-col slds-size_1-of-3">
                             <div class="slds-box slds-box_xx-small slds-theme_success">
-                                <div class="slds-media slds-media_center">
-                                    <div class="slds-media__figure">
-                                        <lightning-icon icon-name="utility:success" size="small"></lightning-icon>
-                                    </div>
-                                    <div class="slds-media__body">
-                                        <div class="slds-text-heading_medium">{totalAttendedCount}</div>
-                                        <div class="slds-text-body_small">Total Attended</div>
-                                    </div>
+                                <div class="slds-text-heading_medium">
+                                    <lightning-icon icon-name="utility:success" size="small" class="slds-m-right_xx-small"></lightning-icon>
+                                    {totalAttendedCount}
                                 </div>
+                                <div class="slds-text-body_small">{checkinStatus}</div>
                             </div>
                         </div>
                         <!-- Total Registered -->
                         <div class="slds-col slds-size_1-of-3">
                             <div class="slds-box slds-box_xx-small slds-theme_info">
-                                <div class="slds-media slds-media_center">
-                                    <div class="slds-media__figure">
-                                        <lightning-icon icon-name="utility:groups" size="small"></lightning-icon>
-                                    </div>
-                                    <div class="slds-media__body">
-                                        <div class="slds-text-heading_medium">{totalRegisteredCount}</div>
-                                        <div class="slds-text-body_small">Total Registered</div>
-                                    </div>
+                                <div class="slds-text-heading_medium">
+                                    <lightning-icon icon-name="utility:groups" size="small" class="slds-m-right_xx-small"></lightning-icon>
+                                    {totalRegisteredCount}
                                 </div>
+                                <div class="slds-text-body_small">Registered</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+
                 <!-- Check-In Options -->
                 <div class="slds-m-bottom_medium slds-text-align_center">
                     <!-- Camera Scan Button (only show when camera is not active) -->
                     <template if:false={showCameraScanner}>
-                        <div class="slds-m-bottom_medium slds-text-align_center">
+                        <div class="slds-m-bottom_xx-small slds-text-align_center">
                             <lightning-button
                                     label="Scan with Camera"
                                     variant="brand"
@@ -166,10 +149,6 @@
                                     disabled={isProcessing}
                                     class="slds-size_1-of-1"
                             ></lightning-button>
-                            <div class="slds-text-body_small slds-text-color_weak slds-text-align_center slds-m-top_x-small">
-                                <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                                Camera automatically uses the best scanner for your device
-                            </div>
                         </div>
                     </template>
 
@@ -201,20 +180,20 @@
                     </template>
 
                     <!-- Or Divider -->
-                    <div class="slds-text-align_center slds-m-vertical_medium">
+                    <div class="slds-text-align_center slds-m-vertical_xx-small">
                         <span class="slds-text-body_small slds-text-color_weak">OR</span>
                     </div>
 
                     <!-- Inline Manual Lookup -->
                     <div class="slds-m-bottom_small">
-                        <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <h3 class="slds-text-heading_small">
                             <lightning-icon icon-name="utility:search" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
                             Search by Name
                         </h3>
 
                         <!-- Search Inputs -->
-                        <div class="slds-grid slds-gutters slds-m-bottom_small">
-                            <div class="slds-col slds-size_1-of-2">
+                        <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_x-small slds-text-align_left">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 ">
                                 <lightning-input
                                         label="First Name"
                                         value={firstName}
@@ -223,7 +202,7 @@
                                         disabled={isProcessing}
                                 ></lightning-input>
                             </div>
-                            <div class="slds-col slds-size_1-of-2">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 ">
                                 <lightning-input
                                         label="Last Name"
                                         value={lastName}
@@ -232,9 +211,7 @@
                                         disabled={isProcessing}
                                 ></lightning-input>
                             </div>
-                        </div>
-                        <div class="slds-grid slds-gutters slds-m-bottom_small">
-                            <div class="slds-col slds-size_1-of-1">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-1">
                                 <lightning-input
                                         label="Email"
                                         type="email"

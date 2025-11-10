@@ -36,6 +36,33 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
+     * Get total registered count for an instance
+     * @param instanceId - The event instance ID
+     * @return Integer - Count of all registrations for the instance (excluding Cancelled and Started)
+     */
+    @AuraEnabled(Cacheable=false)
+    public static Integer getTotalRegisteredCount(String instanceId) {
+        try {
+            if (String.isBlank(instanceId)) {
+                return 0;
+            }
+
+            Integer count = [
+                    SELECT COUNT()
+                    FROM summit__Summit_Events_Registration__c
+                    WHERE summit__Event_Instance__c = :instanceId
+                    AND summit__Status__c != 'Cancelled'
+                    AND summit__Status__c != 'Started'
+            ];
+
+            return count;
+        } catch (Exception e) {
+            System.debug('Error getting registered count: ' + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Get event instances for a given date
      * @param selectedDate - The date to filter instances by
      * @return List<EventInstanceOption> - List of instances occurring on that date

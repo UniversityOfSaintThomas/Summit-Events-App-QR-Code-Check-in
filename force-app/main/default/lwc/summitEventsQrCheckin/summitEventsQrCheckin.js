@@ -8,6 +8,7 @@ import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegis
 import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
 import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
+import getTotalRegisteredCount from '@salesforce/apex/summitEventsCheckin.getTotalRegisteredCount';
 import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
 
 export default class SummitEventsQrCheckin extends LightningElement {
@@ -20,6 +21,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
     @track pendingCheckin = null; // Holds registration awaiting check-in confirmation
     @track scanCount = 0;
     @track totalAttendedCount = 0; // Total attended for the instance
+    @track totalRegisteredCount = 0; // Total registered for the instance
     @track sessionActive = false;
     @track sessionStartTime = null;
     @track showCameraScanner = false;
@@ -162,6 +164,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
     async refreshTotalAttendedCount() {
         if (!this.selectedInstanceId) {
             this.totalAttendedCount = 0;
+            this.totalRegisteredCount = 0;
             return;
         }
 
@@ -170,9 +173,16 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 instanceId: this.selectedInstanceId, checkinStatus: this.checkinStatus
             });
             this.totalAttendedCount = count || 0;
+
+            // Also fetch total registered count
+            const registeredCount = await getTotalRegisteredCount({
+                instanceId: this.selectedInstanceId
+            });
+            this.totalRegisteredCount = registeredCount || 0;
         } catch (error) {
             console.error('Error refreshing attended count:', error);
             this.totalAttendedCount = 0;
+            this.totalRegisteredCount = 0;
         }
     }
 

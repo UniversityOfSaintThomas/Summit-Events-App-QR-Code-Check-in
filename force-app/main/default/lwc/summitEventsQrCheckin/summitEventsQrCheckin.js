@@ -792,4 +792,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         return '';
     }
+
+    get attendanceProgress() {
+        return `${this.totalAttendedCount} / ${this.totalRegisteredCount}`;
+    }
 }

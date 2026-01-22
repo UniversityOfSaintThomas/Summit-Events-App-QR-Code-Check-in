@@ -1,4 +1,3 @@
-
 .result-card {
     padding: 1rem;
     border-radius: 0.25rem;
@@ -142,4 +141,64 @@
 
 .slds-badge lightning-icon {
     vertical-align: middle;
+}
+
+/* Force white icons in counter boxes */
+.slds-theme_success lightning-icon,
+.slds-theme_info lightning-icon,
+.slds-theme_default lightning-icon {
+    --slds-c-icon-color-foreground: white;
+    --slds-c-icon-color-foreground-default: white;
+}
+
+/* Fallback for mobile app using fill */
+.slds-theme_success lightning-icon svg,
+.slds-theme_info lightning-icon svg,
+.slds-theme_default lightning-icon svg {
+    fill: white !important;
+}
+
+/* Counter layout refactor */
+.counter-grid {
+    row-gap: 0.5rem;
+}
+.counter-box {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 0.75rem;
+    min-height: 64px;
+}
+.counter-icon lightning-icon {
+    --slds-c-icon-color-foreground: white;
+    --slds-c-icon-color-foreground-default: white;
+}
+.white-icon lightning-icon,
+.white-icon {
+    --slds-c-icon-color-foreground: white !important;
+    --slds-c-icon-color-foreground-default: white !important;
+}
+.white-icon lightning-icon svg,
+.counter-icon lightning-icon svg {
+    fill: white !important;
+}
+.counter-metrics {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+.counter-number {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.counter-label {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 400;
+}
+@media (max-width: 480px) {
+    .counter-number { font-size: 1.125rem; }
+    .counter-box { min-height: 56px; }
 }

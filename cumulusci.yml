@@ -75,14 +75,20 @@ tasks:
         if (!permissionSetList.isEmpty()) {
             upsert permissionSetList;
         }
+  deploy_sea_site_config:
+    description: Deploys configuration for Development.
+    class_path: cumulusci.tasks.salesforce.Deploy
+    options:
+      namespace_inject: $project_config.project__package__namespace
+      path: unpackaged/config/site
 
 flows:
   config_dev:
     steps:
       3:
-        task: sea:deploy_permission_set
+        task: sea:deploy_admin_permission_set
       4:
-        task: sea:deploy_site_config
+        task: deploy_sea_site_config
       5:
         task: sea:deploy_site_settings
       6:

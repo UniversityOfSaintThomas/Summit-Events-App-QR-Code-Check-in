@@ -12,14 +12,21 @@
     <targetConfigs>
         <targetConfig targets="lightningCommunity__Default">
             <property name="title" type="String" label="Card Title" default="Event Check-In"/>
-            <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended" description="The status value to set when checking in registrants (default: Attended)"/>
+            <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended"
+                      description="The status value to set when checking in registrants (default: Attended)"/>
         </targetConfig>
         <targetConfig targets="lightning__AppPage,lightning__RecordPage,lightning__HomePage">
             <property name="title" type="String" label="Card Title" default="Event Check-In"/>
-            <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended" description="The status value to set when checking in registrants (default: Attended)"/>
+            <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended"
+                      description="The status value to set when checking in registrants (default: Attended)"/>
+            <supportedFormFactors>
+                <supportedFormFactor type="Large"/>
+                <supportedFormFactor type="Small"/>
+            </supportedFormFactors>
         </targetConfig>
     </targetConfigs>
     <masterLabel>Summit Events QR Check-In</masterLabel>
     <description>QR Code scanner for checking in registrants to Summit Events</description>
 </LightningComponentBundle>
+
 

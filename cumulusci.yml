@@ -1,18 +1,19 @@
 minimum_cumulusci_version: '4.6.0'
 project:
-  name: Summit-Evetns-App-Checkin
+  name: Summit-Events-App-Checkin
   package:
-    name: Summit-Evetns-App-Checkin
+    name: Summit-Events-App-Checkin
     api_version: '63.0'
   dependencies:
-    - github: 'https://github.com/SFDO-Community/Summit-Events-App.git'
+    - github: 'https://github.com/SFDO-Community/Summit-Events-App'
   git:
-    default_branch: 'main'
+    default_branch: 'master'
   source_format: sfdx
 
 sources:
   sea:
     github: 'https://github.com/SFDO-Community/Summit-Events-App'
+    branch: 'master'
 
 tasks:
   robot:

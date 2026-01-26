@@ -63,6 +63,50 @@ public with sharing class summitEventsCheckin {
     }
 
     /**
+     * Get event instance details by ID
+     * @param instanceId - The ID of the instance to retrieve
+     * @return EventInstanceOption - Instance details or null if not found
+     */
+    @AuraEnabled(Cacheable=false)
+    public static EventInstanceOption getEventInstanceById(Id instanceId) {
+        try {
+            if (instanceId == null) {
+                return null;
+            }
+
+            // Query for the specific instance
+            List<summit__Summit_Events_Instance__c> instances = [
+                    SELECT Id, Name, summit__Instance_Title__c,
+                            summit__Event__r.Name,
+                            summit__Instance_Start_Date__c,
+                            summit__Instance_Start_Time__c
+                    FROM summit__Summit_Events_Instance__c
+                    WHERE Id = :instanceId
+                    LIMIT 1
+            ];
+
+            if (instances.isEmpty()) {
+                return null;
+            }
+
+            summit__Summit_Events_Instance__c instance = instances[0];
+            EventInstanceOption option = new EventInstanceOption();
+            option.value = instance.Id;
+            option.label = instance.summit__Event__r.Name + ' - ' + instance.summit__Instance_Title__c;
+            option.eventName = instance.summit__Event__r.Name;
+            option.instanceTitle = instance.summit__Instance_Title__c;
+            option.instanceStartDate = instance.summit__Instance_Start_Date__c;
+            option.instanceStartTime = instance.summit__Instance_Start_Time__c;
+
+            return option;
+
+        } catch (Exception e) {
+            System.debug('Error getting event instance by ID: ' + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get event instances for a given date
      * @param selectedDate - The date to filter instances by
      * @return List<EventInstanceOption> - List of instances occurring on that date

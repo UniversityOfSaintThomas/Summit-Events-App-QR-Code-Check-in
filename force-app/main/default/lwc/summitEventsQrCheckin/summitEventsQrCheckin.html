@@ -7,52 +7,63 @@
                 <div class="slds-text-align_center slds-m-vertical_large">
                     <lightning-icon icon-name="utility:scan" size="large" class="slds-m-bottom_medium"></lightning-icon>
                     <h2 class="slds-text-heading_medium slds-m-bottom_small">Ready to Check In Registrants</h2>
-                    <p class="slds-text-body_regular slds-m-bottom_medium">
-                        Select the event date and instance to begin checking in attendees.
-                    </p>
 
-                    <!-- Event Selection Form -->
-                    <div class="slds-text-align_center">
-                        <div class="slds-m-bottom_medium">
-                            <lightning-input
-                                    type="date"
-                                    label="Event Instance Date"
-                                    value={selectedDate}
-                                    onchange={handleDateChange}
-                                    required
-                            ></lightning-input>
-                        </div>
+                    <!-- Show different message based on context -->
+                    <template if:true={isOnInstanceRecordPage}>
+                        <p class="slds-text-body_regular slds-m-bottom_medium">
+                            Click "Start Scanning Session" to begin checking in attendees for this event instance.
+                        </p>
+                    </template>
+                    <template if:false={isOnInstanceRecordPage}>
+                        <p class="slds-text-body_regular slds-m-bottom_medium">
+                            Select the event date and instance to begin checking in attendees.
+                        </p>
+                    </template>
 
-                        <template if:true={loadingInstances}>
-                            <div class="slds-text-align_center slds-m-vertical_medium">
-                                <lightning-spinner alternative-text="Loading instances..." size="small"></lightning-spinner>
-                                <p class="slds-m-top_small slds-text-body_small">Loading event instances...</p>
-                            </div>
-                        </template>
-
-                        <template if:true={showInstancePicker}>
+                    <!-- Event Selection Form (only show when NOT on instance record page) -->
+                    <template if:true={showDateInstanceSelection}>
+                        <div class="slds-text-align_center">
                             <div class="slds-m-bottom_medium">
-                                <lightning-combobox
-                                        label="Event Instance"
-                                        value={selectedInstanceId}
-                                        placeholder="Select an event instance"
-                                        options={instanceOptions}
-                                        onchange={handleInstanceChange}
+                                <lightning-input
+                                        type="date"
+                                        label="Event Instance Date"
+                                        value={selectedDate}
+                                        onchange={handleDateChange}
                                         required
-                                ></lightning-combobox>
+                                ></lightning-input>
                             </div>
-                        </template>
 
-                        <template if:true={noInstancesFound}>
-                            <div class="slds-m-bottom_medium">
-                                <div class="slds-notify slds-notify_alert slds-alert_warning" role="alert">
-                                    <span class="slds-assistive-text">warning</span>
-                                    <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" class="slds-m-right_x-small"></lightning-icon>
-                                    <h2>No event instances found for the selected date.</h2>
+                            <template if:true={loadingInstances}>
+                                <div class="slds-text-align_center slds-m-vertical_medium">
+                                    <lightning-spinner alternative-text="Loading instances..." size="small"></lightning-spinner>
+                                    <p class="slds-m-top_small slds-text-body_small">Loading event instances...</p>
                                 </div>
-                            </div>
-                        </template>
-                    </div>
+                            </template>
+
+                            <template if:true={showInstancePicker}>
+                                <div class="slds-m-bottom_medium">
+                                    <lightning-combobox
+                                            label="Event Instance"
+                                            value={selectedInstanceId}
+                                            placeholder="Select an event instance"
+                                            options={instanceOptions}
+                                            onchange={handleInstanceChange}
+                                            required
+                                    ></lightning-combobox>
+                                </div>
+                            </template>
+
+                            <template if:true={noInstancesFound}>
+                                <div class="slds-m-bottom_medium">
+                                    <div class="slds-notify slds-notify_alert slds-alert_warning" role="alert">
+                                        <span class="slds-assistive-text">warning</span>
+                                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" class="slds-m-right_x-small"></lightning-icon>
+                                        <h2>No event instances found for the selected date.</h2>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
 
                     <lightning-button
                             label="Start Scanning Session"

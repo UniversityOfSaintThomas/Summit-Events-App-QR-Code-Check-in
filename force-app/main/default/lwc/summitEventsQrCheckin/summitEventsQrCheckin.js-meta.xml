@@ -15,7 +15,19 @@
             <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended"
                       description="The status value to set when checking in registrants (default: Attended)"/>
         </targetConfig>
-        <targetConfig targets="lightning__AppPage,lightning__RecordPage,lightning__HomePage">
+        <targetConfig targets="lightning__RecordPage">
+            <property name="title" type="String" label="Card Title" default="Event Check-In"/>
+            <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended"
+                      description="The status value to set when checking in registrants (default: Attended)"/>
+            <objects>
+                <object>summit__Summit_Events_Instance__c</object>
+            </objects>
+            <supportedFormFactors>
+                <supportedFormFactor type="Large"/>
+                <supportedFormFactor type="Small"/>
+            </supportedFormFactors>
+        </targetConfig>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
             <property name="title" type="String" label="Card Title" default="Event Check-In"/>
             <property name="checkinStatus" type="String" label="Check-In Status Value" default="Attended"
                       description="The status value to set when checking in registrants (default: Attended)"/>

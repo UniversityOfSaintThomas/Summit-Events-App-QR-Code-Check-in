@@ -7,6 +7,7 @@ import lookupRegistrant from '@salesforce/apex/summitEventsCheckin.lookupRegistr
 import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegistrant';
 import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
+import getEventInstanceById from '@salesforce/apex/summitEventsCheckin.getEventInstanceById';
 import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
 import getTotalRegisteredCount from '@salesforce/apex/summitEventsCheckin.getTotalRegisteredCount';
 import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
@@ -14,6 +15,33 @@ import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
     @api checkinStatus = 'Attended'; // Configurable status value for check-in
+
+    // Private properties for recordId and objectApiName with setters
+    _recordId;
+    _objectApiName;
+
+    @api
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        this._recordId = value;
+        if (value) {
+            this.checkRecordContext();
+        }
+    }
+
+    @api
+    get objectApiName() {
+        return this._objectApiName;
+    }
+    set objectApiName(value) {
+        this._objectApiName = value;
+        if (value && this._recordId) {
+            this.checkRecordContext();
+        }
+    }
+
     @track qrCodeInput = '';
     @track isProcessing = false;
     @track lastCheckinResult = null;
@@ -64,6 +92,93 @@ export default class SummitEventsQrCheckin extends LightningElement {
             console.info('BarcodeScanner unavailable. Non-mobile device? Using manual input mode.');
         }
         this.loadJsQRLibrary();
+
+        // Log initial state
+        console.log('connectedCallback - _recordId:', this._recordId, '_objectApiName:', this._objectApiName);
+
+        // Try to get recordId from URL if not provided by framework
+        if (!this._recordId) {
+            const recordId = this.getRecordIdFromUrl();
+            if (recordId) {
+                console.log('🔍 Detected recordId from URL:', recordId);
+                this._recordId = recordId;
+                // Assume it's an instance record if we got an ID from URL
+                this._objectApiName = 'summit__Summit_Events_Instance__c';
+            }
+        }
+
+        // Check if we're on an instance record page
+        this.checkRecordContext();
+    }
+
+    getRecordIdFromUrl() {
+        // Get the current page URL
+        const url = window.location.href;
+        console.log('Current URL:', url);
+
+        // Try to extract 18-character Salesforce ID from URL
+        // Pattern: /r/[ObjectName]/[15or18charID]/view or /[15or18charID]
+        const patterns = [
+            /\/r\/[^\/]+\/([a-zA-Z0-9]{15,18})\//, // Lightning Experience: /r/ObjectName/ID/view
+            /\/([a-zA-Z0-9]{15,18})\/view/, // Alternative pattern
+            /\/([a-zA-Z0-9]{15,18})\?/, // ID before query params
+            /\/([a-zA-Z0-9]{15,18})$/ // ID at end of URL
+        ];
+
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1] && /^[a-zA-Z]/.test(match[1])) {
+            }
+        }
+
+        console.log('❌ No recordId found in URL');
+        return null;
+    }
+
+    async checkRecordContext() {
+        console.log('checkRecordContext called - _recordId:', this._recordId, '_objectApiName:', this._objectApiName);
+
+        // Skip if already loaded or if we don't have the necessary context
+        if (this.selectedInstanceId) {
+            console.log('Instance already loaded, skipping');
+            return;
+        }
+
+        if (!this._recordId || !this._objectApiName) {
+            console.log('Missing _recordId or _objectApiName, cannot check context');
+            return;
+        }
+
+        // Check if component is placed on a Summit Events Instance record page
+        if (this._objectApiName === 'summit__Summit_Events_Instance__c') {
+            console.log('✅ Component placed on Instance record page. Auto-loading instance:', this._recordId);
+            try {
+                const instanceDetails = await getEventInstanceById({ instanceId: this._recordId });
+
+                if (instanceDetails) {
+                    this.selectedInstanceId = instanceDetails.value;
+                    this.selectedEventName = instanceDetails.eventName;
+                    this.selectedInstanceName = instanceDetails.instanceTitle;
+                    this.selectedInstanceStartDate = instanceDetails.instanceStartDate;
+                    this.selectedInstanceStartTime = instanceDetails.instanceStartTime;
+
+                    console.log('✅ Instance loaded successfully:', {
+                        id: this.selectedInstanceId,
+                        event: this.selectedEventName,
+                        instance: this.selectedInstanceName,
+                        date: this.selectedInstanceStartDate,
+                        time: this.selectedInstanceStartTime
+                    });
+                } else {
+                    console.warn('⚠️ Could not load instance details for recordId:', this._recordId);
+                }
+            } catch (error) {
+                console.error('❌ Error loading instance from record context:', error);
+                this.showToast('Error', 'Failed to load event instance details.', 'error');
+            }
+        } else {
+            console.log('Not on instance record page. Object:', this._objectApiName);
+        }
     }
 
     getMediaDevices() {
@@ -711,6 +826,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     get showActiveSessionControls() {
         return this.sessionActive;
+    }
+
+    get isOnInstanceRecordPage() {
+        return this._recordId && this._objectApiName === 'summit__Summit_Events_Instance__c';
+    }
+
+    get showDateInstanceSelection() {
+        return !this.isOnInstanceRecordPage;
     }
 
     get sessionDuration() {

@@ -408,10 +408,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
         this.showCameraScanner = true;
 
+        // Start camera immediately after UI renders
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                this.startCameraScanning();
-            });
+            this.startCameraScanning();
         });
     }
 
@@ -421,7 +420,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             const canvas = this.refs.canvasElement;
 
             if (!video || !canvas) {
-                console.error('Video or canvas element not found');
+                console.error('❌ Video or canvas element not found');
                 return;
             }
 
@@ -431,34 +430,70 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 throw new Error('Camera API not available');
             }
 
+            // Request LOWER resolution for faster QR detection on desktop
             this.videoStream = await mediaDevices.getUserMedia({
-                video: {facingMode: 'environment'}
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 640, max: 640 },
+                    height: { ideal: 480, max: 480 }
+                }
             });
 
             video.srcObject = this.videoStream;
             video.setAttribute('playsinline', true);
             await video.play();
 
-            const canvasContext = canvas.getContext('2d');
+            // Wait for video to be fully ready before starting scan loop
+            await new Promise(resolve => {
+                const checkReady = () => {
+                    if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+                        resolve();
+                    } else {
+                        setTimeout(checkReady, 50);
+                    }
+                };
+                checkReady();
+            });
 
+            // FORCE canvas to 640×480 regardless of camera resolution
+            // This downscales high-res video for much faster QR processing
+            const targetWidth = 640;
+            const targetHeight = 480;
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            console.log(`📹 Camera ready: ${video.videoWidth}×${video.videoHeight} → ${canvas.width}×${canvas.height} canvas`);
+
+            const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
+
+            // Scan once per second for reliable QR detection
             this.scanningInterval = setInterval(() => {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.height = video.videoHeight;
-                    canvas.width = video.videoWidth;
-                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                if (!this.videoStream || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    return; // Skip this scan if video not ready
+                }
 
+                try {
+                    // Draw current video frame to canvas (browser auto-downscales)
+                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
                     const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+
+                    // Scan for QR code
                     const code = this.jsQRLibrary(imageData.data, imageData.width, imageData.height, {
                         inversionAttempts: 'dontInvert'
                     });
 
-                    if (code) {
+                    if (code && code.data) {
+                        // QR code detected! Process check-in
+                        console.log(`✅ QR code found: ${code.data}`);
                         this.qrCodeInput = code.data;
                         this.handleCloseCameraScanner();
                         this.handleCheckIn();
                     }
+                } catch (error) {
+                    console.error('❌ QR scan error:', error);
                 }
-            }, 100);
+            }, 1000); // Scan every 1 second
 
         } catch (error) {
             console.error('Camera access error:', error);
@@ -494,6 +529,17 @@ export default class SummitEventsQrCheckin extends LightningElement {
             this.videoStream.getTracks().forEach(track => track.stop());
             this.videoStream = null;
         }
+    }
+
+
+    scrollToResults() {
+        // Use setTimeout to ensure DOM has updated before scrolling
+        setTimeout(() => {
+            const resultsSection = this.refs.resultsSection;
+            if (resultsSection) {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     }
 
     handleStopSession() {
@@ -567,6 +613,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 // Store pending registration for confirmation
                 this.pendingCheckin = result;
                 this.showResult = true;
+
+                // Scroll to results on mobile
+                this.scrollToResults();
 
                 if (result.alreadyCheckedIn) {
                     this.showToast('Already Checked In', `${result.registrantName} was already checked in.`, 'info');

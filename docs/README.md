@@ -4,50 +4,92 @@
 
 Complete check-in solution with QR code scanning, manual search, and context-aware deployment.
 
+**Status:** ✅ Production Ready (v2.0 - January 2026)
+
 ---
 
 ## 📚 Documentation Index
 
-### Getting Started
+### Getting Started (Essential)
 
 - **[Quick Start Guide](QUICK-START.md)** - Get started in 2 minutes
+- **[User Guide](USER-GUIDE.md)** - Complete user instructions for check-in staff
 - **[Installation Guide](INSTALLATION-PACKAGE.md)** - Package installation instructions
-- **[User Guide](USER-GUIDE.md)** - Complete user instructions
 
 ### Administrator Guides
 
 - **[Camera Troubleshooting](CAMERA-TROUBLESHOOTING.md)** - Resolve camera access issues
-- **[LWS Enablement Guide](LWS-ENABLEMENT-GUIDE.md)** - Enable browser camera scanning
+- **[LWS Enablement Guide](LWS-ENABLEMENT-GUIDE.md)** - Enable browser camera scanning (desktop only)
 
 ### Developer Resources
 
 - **[Developer Setup](DEVELOPER-SETUP.md)** - Development environment with CumulusCI
-- **[Architecture](ARCHITECTURE.md)** - Technical architecture and design
+- **[Architecture](ARCHITECTURE.md)** - Technical architecture and component design
 
 ### Archive
 
-Historical documentation and release notes are in the `/docs/archive/` folder.
+Historical documentation, milestone reports, and deprecated guides are in `/docs/archive/`
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features (Current Production Version)
 
-### Context-Aware Deployment
-The component automatically detects when it's placed on a Summit Events Instance record page and pre-loads the instance details. No manual date/instance selection needed!
+### 1. Context-Aware Deployment ✅
+Automatically detects when placed on a Summit Events Instance record page.
 
 **On Instance Record Page:**
-- ✅ Auto-detects instance from page context
-- ✅ "Start Scanning Session" button enabled immediately
-- ✅ No date/instance selection needed
+- ✅ Auto-loads instance from page context
+- ✅ "Start Scanning Session" button ready immediately
+- ✅ No manual date/instance selection needed
 
 **On App/Home/Community Pages:**
 - ✅ Shows date picker and instance dropdown
 - ✅ Select event and instance manually
 - ✅ Works anywhere in Salesforce
 
-### Multi-Platform Scanning
-- **Salesforce Mobile App:** Native barcode scanner
-- **Desktop Browser:** jsQR-based camera scanner (requires LWS)
+### 2. Multi-Platform Scanning ✅
+
+**Salesforce Mobile App:**
+- Native barcode scanner (best performance)
+- Automatically used when available
+- Supports all barcode types
+
+**Desktop Browser:**
+- jsQR-based camera scanner
+- Optimized for fast QR detection (~0.5 seconds)
+- Requires Lightning Web Security (LWS) enabled
+- Works in Chrome, Firefox, Edge, Safari
+
+**Manual Search:**
+- Search by first name, last name, or email
+- Paginated results (5 per page)
+- Available on all platforms
+
+### 3. Production-Optimized Performance ✅
+
+**Desktop Camera:**
+- 7x faster QR detection (540ms average)
+- Forced 640×480 resolution for optimal speed
+- 1-second scan interval for reliability
+- Auto-scrolls to results on mobile
+
+**Mobile Scanner:**
+- Native Salesforce scanner prioritized
+- Instant detection on mobile devices
+- Seamless experience in mobile app
+
+### 4. Session Management ✅
+- Start/Stop/Reset session controls
+- Live scan counter
+- Session duration tracking
+- Total attended vs registered count
+
+### 5. Check-In Workflow ✅
+- Two-step confirmation process
+- Shows registrant details before check-in
+- Undo check-in capability
+- Already-checked-in detection
+- Real-time count updates
 - **USB Scanner:** Keyboard input mode
 - **Manual Search:** Name and email lookup with pagination
 

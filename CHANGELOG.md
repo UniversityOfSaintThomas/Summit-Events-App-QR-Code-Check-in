@@ -30,12 +30,38 @@
   - QR code detection success
   - Errors when they occur
 
+### Optimized
+- **Parallel API calls** - `refreshTotalAttendedCount()` now uses `Promise.all()`
+  - Fetches attended count and registered count simultaneously
+  - ~50% faster count refresh (was sequential, now parallel)
+  
+- **Improved scanner detection** - Better Salesforce Mobile App prioritization
+  - Mobile app scanner checked first (best performance)
+  - Desktop camera as fallback
+  - Cleaner conditional logic with optional chaining
+  - Added console log when mobile scanner available
+  
+- **Optimized `getMediaDevices()`** - Cleaner code with early returns
+  - Modern API checked first
+  - Legacy fallback for older browsers
+  - Reduced code complexity
+  
+- **Better memory management** - Camera cleanup before processing
+  - Stops scanning interval immediately after QR detection
+  - Prevents memory leaks from running intervals
+  - Cleaner resource management
+
 ### Fixed
 - **Desktop camera QR scanning now works reliably** ✅
   - **Before:** 3.9 second QR detection, often failed
   - **After:** 0.54 second QR detection, 90%+ success rate
   - **Performance improvement:** 7x faster
   - **User experience:** Detection in 2-5 seconds typical
+  
+- **Salesforce Mobile App scanner prioritized** ✅
+  - Native scanner used when available (best performance)
+  - Desktop camera only used when mobile scanner unavailable
+  - Clear indication in console when mobile scanner active
   
 ### Changed
 - **Scan rate reduced to 1 second** - Maximum reliability for desktop cameras

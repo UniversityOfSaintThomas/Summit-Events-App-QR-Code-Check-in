@@ -18,7 +18,10 @@ module.exports = defineConfig([
     // LWC configuration
     {
         files: ['**/lwc/**/*.js'],
-        extends: [lwcConfig]
+        extends: [lwcConfig],
+        rules: {
+            '@lwc/lwc/no-async-operation': 'off' // Allow setTimeout, setInterval, requestAnimationFrame for camera scanning
+        }
     },
 
     // LWC configuration with override for LWC test files

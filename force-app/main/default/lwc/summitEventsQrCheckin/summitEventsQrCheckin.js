@@ -86,11 +86,16 @@ export default class SummitEventsQrCheckin extends LightningElement {
     jsQRLoaded = false;
 
     connectedCallback() {
+        // Initialize Salesforce Mobile scanner (priority for mobile app)
         this.myScanner = getBarcodeScanner();
-        if (this.myScanner == null || !this.myScanner.isAvailable()) {
+
+        if (!this.myScanner?.isAvailable()) {
             this.scanButtonDisabled = true;
             console.info('BarcodeScanner unavailable. Non-mobile device? Using manual input mode.');
+        } else {
+            console.log('📱 Salesforce Mobile App scanner available');
         }
+
         this.loadJsQRLibrary();
 
         // Log initial state
@@ -128,6 +133,8 @@ export default class SummitEventsQrCheckin extends LightningElement {
         for (const pattern of patterns) {
             const match = url.match(pattern);
             if (match && match[1] && /^[a-zA-Z]/.test(match[1])) {
+                console.log('✅ Found recordId in URL:', match[1]);
+                return match[1]; // Return the extracted ID
             }
         }
 
@@ -184,21 +191,20 @@ export default class SummitEventsQrCheckin extends LightningElement {
     getMediaDevices() {
         // Try multiple ways to access mediaDevices (Locker Service workaround)
         try {
-            if (navigator.mediaDevices) {
-                return navigator.mediaDevices;
-            }
-            if (window.navigator && window.navigator.mediaDevices) {
-                return window.navigator.mediaDevices;
-            }
-            // Legacy API fallback
-            if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+            // Modern API
+            if (navigator?.mediaDevices) return navigator.mediaDevices;
+            if (window.navigator?.mediaDevices) return window.navigator.mediaDevices;
+
+            // Legacy API fallback (for older browsers)
+            const legacyGetUserMedia = navigator.getUserMedia ||
+                                       navigator.webkitGetUserMedia ||
+                                       navigator.mozGetUserMedia;
+
+            if (legacyGetUserMedia) {
                 return {
-                    getUserMedia: function (constraints) {
-                        const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                        return new Promise((resolve, reject) => {
-                            legacyGetUserMedia.call(navigator, constraints, resolve, reject);
-                        });
-                    }
+                    getUserMedia: (constraints) => new Promise((resolve, reject) => {
+                        legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+                    })
                 };
             }
         } catch (error) {
@@ -284,15 +290,18 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
 
         try {
-            const count = await getTotalAttendedCount({
-                instanceId: this.selectedInstanceId, checkinStatus: this.checkinStatus
-            });
-            this.totalAttendedCount = count || 0;
+            // Fetch both counts in parallel for better performance
+            const [count, registeredCount] = await Promise.all([
+                getTotalAttendedCount({
+                    instanceId: this.selectedInstanceId,
+                    checkinStatus: this.checkinStatus
+                }),
+                getTotalRegisteredCount({
+                    instanceId: this.selectedInstanceId
+                })
+            ]);
 
-            // Also fetch total registered count
-            const registeredCount = await getTotalRegisteredCount({
-                instanceId: this.selectedInstanceId
-            });
+            this.totalAttendedCount = count || 0;
             this.totalRegisteredCount = registeredCount || 0;
         } catch (error) {
             console.error('Error refreshing attended count:', error);
@@ -360,22 +369,19 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     async handleBrowserCameraScan() {
-
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
             return;
         }
 
-        // Auto-detect device and use appropriate scanner
-        const isSalesforceMobile = this.myScanner != null && this.myScanner.isAvailable();
-
-        if (isSalesforceMobile) {
-            // On Salesforce Mobile App - use native scanner
+        // PRIORITY 1: Salesforce Mobile App native scanner (best performance)
+        if (this.myScanner?.isAvailable()) {
+            console.log('📱 Using Salesforce Mobile App native scanner');
             this.handleScanWithCamera();
             return;
         }
 
-        // On desktop/browser - use jsQR camera
+        // PRIORITY 2: Desktop browser camera with jsQR
         // Check if running in secure context (HTTPS or localhost)
         if (!window.isSecureContext) {
             this.showToast('Secure Connection Required', 'Camera access requires HTTPS. Please access this page via HTTPS or use manual search.', 'error');
@@ -383,32 +389,23 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
-        // Check for mediaDevices API using workaround for Locker Service
+        // Check for mediaDevices API
         const mediaDevices = this.getMediaDevices();
-
-        if (!mediaDevices) {
-            this.showToast('Camera Not Available', 'Camera requires Lightning Web Security. Ask your admin to enable LWS in Setup → Session Settings, or use manual search.', 'warning');
-            console.error('❌ navigator.mediaDevices is not available (blocked by Locker Service)');
-            console.error('ℹ️ Solution: Enable Lightning Web Security in Setup → Session Settings');
-            console.error('ℹ️ Alternative: Use Salesforce Mobile App or manual search');
-            return;
-        }
-
-        if (!mediaDevices.getUserMedia) {
-            this.showToast('getUserMedia Not Supported', 'Your browser does not support camera access. Please use the Salesforce Mobile App or manual search.', 'error');
+        if (!mediaDevices?.getUserMedia) {
+            this.showToast('Camera Not Available', 'Camera requires Lightning Web Security or Salesforce Mobile App. Please use manual search.', 'warning');
             console.error('❌ getUserMedia is not available');
             return;
         }
 
+        // Check jsQR library is loaded
         if (!this.jsQRLoaded || !this.jsQRLibrary) {
             this.showToast('Scanner Loading', 'QR code scanner is still loading. Please try again in a moment.', 'info');
             console.warn('⚠️ jsQR library not loaded yet');
             return;
         }
 
+        // Start desktop camera scanner
         this.showCameraScanner = true;
-
-        // Start camera immediately after UI renders
         requestAnimationFrame(() => {
             this.startCameraScanning();
         });
@@ -483,11 +480,15 @@ export default class SummitEventsQrCheckin extends LightningElement {
                         inversionAttempts: 'dontInvert'
                     });
 
-                    if (code && code.data) {
-                        // QR code detected! Process check-in
+                    if (code?.data) {
+                        // QR code detected! Stop scanning immediately
                         console.log(`✅ QR code found: ${code.data}`);
                         this.qrCodeInput = code.data;
+
+                        // Clean up scanner BEFORE processing to prevent memory leaks
                         this.handleCloseCameraScanner();
+
+                        // Process check-in
                         this.handleCheckIn();
                     }
                 } catch (error) {
@@ -766,6 +767,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
             if (results.length === 0) {
                 this.showToast('No Results', 'No registrations found matching the criteria.', 'info');
+            } else {
+                // Scroll to results on mobile/desktop
+                this.scrollToResults();
             }
 
         } catch (error) {

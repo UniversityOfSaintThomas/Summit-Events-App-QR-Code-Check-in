@@ -76,6 +76,7 @@
     text-align: center;
 }
 
+
 .inline-camera-container {
     position: relative;
     width: 100%;
@@ -97,6 +98,7 @@
 .camera-canvas {
     display: none;
 }
+
 
 @media (max-width: 768px) {
     .inline-camera-container {

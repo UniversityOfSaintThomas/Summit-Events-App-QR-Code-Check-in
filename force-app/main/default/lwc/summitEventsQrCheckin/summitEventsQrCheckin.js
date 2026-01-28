@@ -7,6 +7,7 @@ import lookupRegistrant from '@salesforce/apex/summitEventsCheckin.lookupRegistr
 import checkInRegistrant from '@salesforce/apex/summitEventsCheckin.checkInRegistrant';
 import searchRegistrations from '@salesforce/apex/summitEventsCheckin.searchRegistrations';
 import getEventInstancesByDate from '@salesforce/apex/summitEventsCheckin.getEventInstancesByDate';
+import getEventInstanceById from '@salesforce/apex/summitEventsCheckin.getEventInstanceById';
 import getTotalAttendedCount from '@salesforce/apex/summitEventsCheckin.getTotalAttendedCount';
 import getTotalRegisteredCount from '@salesforce/apex/summitEventsCheckin.getTotalRegisteredCount';
 import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
@@ -14,6 +15,33 @@ import undoCheckIn from '@salesforce/apex/summitEventsCheckin.undoCheckIn';
 export default class SummitEventsQrCheckin extends LightningElement {
     @api title = 'Event Check-In';
     @api checkinStatus = 'Attended'; // Configurable status value for check-in
+
+    // Private properties for recordId and objectApiName with setters
+    _recordId;
+    _objectApiName;
+
+    @api
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        this._recordId = value;
+        if (value) {
+            this.checkRecordContext();
+        }
+    }
+
+    @api
+    get objectApiName() {
+        return this._objectApiName;
+    }
+    set objectApiName(value) {
+        this._objectApiName = value;
+        if (value && this._recordId) {
+            this.checkRecordContext();
+        }
+    }
+
     @track qrCodeInput = '';
     @track isProcessing = false;
     @track lastCheckinResult = null;
@@ -58,32 +86,125 @@ export default class SummitEventsQrCheckin extends LightningElement {
     jsQRLoaded = false;
 
     connectedCallback() {
+        // Initialize Salesforce Mobile scanner (priority for mobile app)
         this.myScanner = getBarcodeScanner();
-        if (this.myScanner == null || !this.myScanner.isAvailable()) {
+
+        if (!this.myScanner?.isAvailable()) {
             this.scanButtonDisabled = true;
             console.info('BarcodeScanner unavailable. Non-mobile device? Using manual input mode.');
+        } else {
+            console.log('📱 Salesforce Mobile App scanner available');
         }
+
         this.loadJsQRLibrary();
+
+        // Log initial state
+        console.log('connectedCallback - _recordId:', this._recordId, '_objectApiName:', this._objectApiName);
+
+        // Try to get recordId from URL if not provided by framework
+        if (!this._recordId) {
+            const recordId = this.getRecordIdFromUrl();
+            if (recordId) {
+                console.log('🔍 Detected recordId from URL:', recordId);
+                this._recordId = recordId;
+                // Assume it's an instance record if we got an ID from URL
+                this._objectApiName = 'summit__Summit_Events_Instance__c';
+            }
+        }
+
+        // Check if we're on an instance record page
+        this.checkRecordContext();
+    }
+
+    getRecordIdFromUrl() {
+        // Get the current page URL
+        const url = window.location.href;
+        console.log('Current URL:', url);
+
+        // Try to extract 18-character Salesforce ID from URL
+        // Pattern: /r/[ObjectName]/[15or18charID]/view or /[15or18charID]
+        const patterns = [
+            /\/r\/[^\/]+\/([a-zA-Z0-9]{15,18})\//, // Lightning Experience: /r/ObjectName/ID/view
+            /\/([a-zA-Z0-9]{15,18})\/view/, // Alternative pattern
+            /\/([a-zA-Z0-9]{15,18})\?/, // ID before query params
+            /\/([a-zA-Z0-9]{15,18})$/ // ID at end of URL
+        ];
+
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1] && /^[a-zA-Z]/.test(match[1])) {
+                console.log('✅ Found recordId in URL:', match[1]);
+                return match[1]; // Return the extracted ID
+            }
+        }
+
+        console.log('❌ No recordId found in URL');
+        return null;
+    }
+
+    async checkRecordContext() {
+        console.log('checkRecordContext called - _recordId:', this._recordId, '_objectApiName:', this._objectApiName);
+
+        // Skip if already loaded or if we don't have the necessary context
+        if (this.selectedInstanceId) {
+            console.log('Instance already loaded, skipping');
+            return;
+        }
+
+        if (!this._recordId || !this._objectApiName) {
+            console.log('Missing _recordId or _objectApiName, cannot check context');
+            return;
+        }
+
+        // Check if component is placed on a Summit Events Instance record page
+        if (this._objectApiName === 'summit__Summit_Events_Instance__c') {
+            console.log('✅ Component placed on Instance record page. Auto-loading instance:', this._recordId);
+            try {
+                const instanceDetails = await getEventInstanceById({ instanceId: this._recordId });
+
+                if (instanceDetails) {
+                    this.selectedInstanceId = instanceDetails.value;
+                    this.selectedEventName = instanceDetails.eventName;
+                    this.selectedInstanceName = instanceDetails.instanceTitle;
+                    this.selectedInstanceStartDate = instanceDetails.instanceStartDate;
+                    this.selectedInstanceStartTime = instanceDetails.instanceStartTime;
+
+                    console.log('✅ Instance loaded successfully:', {
+                        id: this.selectedInstanceId,
+                        event: this.selectedEventName,
+                        instance: this.selectedInstanceName,
+                        date: this.selectedInstanceStartDate,
+                        time: this.selectedInstanceStartTime
+                    });
+                } else {
+                    console.warn('⚠️ Could not load instance details for recordId:', this._recordId);
+                }
+            } catch (error) {
+                console.error('❌ Error loading instance from record context:', error);
+                this.showToast('Error', 'Failed to load event instance details.', 'error');
+            }
+        } else {
+            console.log('Not on instance record page. Object:', this._objectApiName);
+        }
     }
 
     getMediaDevices() {
         // Try multiple ways to access mediaDevices (Locker Service workaround)
         try {
-            if (navigator.mediaDevices) {
-                return navigator.mediaDevices;
-            }
-            if (window.navigator && window.navigator.mediaDevices) {
-                return window.navigator.mediaDevices;
-            }
-            // Legacy API fallback
-            if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+            // Modern API
+            if (navigator?.mediaDevices) return navigator.mediaDevices;
+            if (window.navigator?.mediaDevices) return window.navigator.mediaDevices;
+
+            // Legacy API fallback (for older browsers)
+            const legacyGetUserMedia = navigator.getUserMedia ||
+                                       navigator.webkitGetUserMedia ||
+                                       navigator.mozGetUserMedia;
+
+            if (legacyGetUserMedia) {
                 return {
-                    getUserMedia: function (constraints) {
-                        const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                        return new Promise((resolve, reject) => {
-                            legacyGetUserMedia.call(navigator, constraints, resolve, reject);
-                        });
-                    }
+                    getUserMedia: (constraints) => new Promise((resolve, reject) => {
+                        legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+                    })
                 };
             }
         } catch (error) {
@@ -169,15 +290,18 @@ export default class SummitEventsQrCheckin extends LightningElement {
         }
 
         try {
-            const count = await getTotalAttendedCount({
-                instanceId: this.selectedInstanceId, checkinStatus: this.checkinStatus
-            });
-            this.totalAttendedCount = count || 0;
+            // Fetch both counts in parallel for better performance
+            const [count, registeredCount] = await Promise.all([
+                getTotalAttendedCount({
+                    instanceId: this.selectedInstanceId,
+                    checkinStatus: this.checkinStatus
+                }),
+                getTotalRegisteredCount({
+                    instanceId: this.selectedInstanceId
+                })
+            ]);
 
-            // Also fetch total registered count
-            const registeredCount = await getTotalRegisteredCount({
-                instanceId: this.selectedInstanceId
-            });
+            this.totalAttendedCount = count || 0;
             this.totalRegisteredCount = registeredCount || 0;
         } catch (error) {
             console.error('Error refreshing attended count:', error);
@@ -245,22 +369,19 @@ export default class SummitEventsQrCheckin extends LightningElement {
     }
 
     async handleBrowserCameraScan() {
-
         if (!this.sessionActive) {
             this.showToast('Session Not Started', 'Please start a scanning session first.', 'warning');
             return;
         }
 
-        // Auto-detect device and use appropriate scanner
-        const isSalesforceMobile = this.myScanner != null && this.myScanner.isAvailable();
-
-        if (isSalesforceMobile) {
-            // On Salesforce Mobile App - use native scanner
+        // PRIORITY 1: Salesforce Mobile App native scanner (best performance)
+        if (this.myScanner?.isAvailable()) {
+            console.log('📱 Using Salesforce Mobile App native scanner');
             this.handleScanWithCamera();
             return;
         }
 
-        // On desktop/browser - use jsQR camera
+        // PRIORITY 2: Desktop browser camera with jsQR
         // Check if running in secure context (HTTPS or localhost)
         if (!window.isSecureContext) {
             this.showToast('Secure Connection Required', 'Camera access requires HTTPS. Please access this page via HTTPS or use manual search.', 'error');
@@ -268,35 +389,25 @@ export default class SummitEventsQrCheckin extends LightningElement {
             return;
         }
 
-        // Check for mediaDevices API using workaround for Locker Service
+        // Check for mediaDevices API
         const mediaDevices = this.getMediaDevices();
-
-        if (!mediaDevices) {
-            this.showToast('Camera Not Available', 'Camera requires Lightning Web Security. Ask your admin to enable LWS in Setup → Session Settings, or use manual search.', 'warning');
-            console.error('❌ navigator.mediaDevices is not available (blocked by Locker Service)');
-            console.error('ℹ️ Solution: Enable Lightning Web Security in Setup → Session Settings');
-            console.error('ℹ️ Alternative: Use Salesforce Mobile App or manual search');
-            return;
-        }
-
-        if (!mediaDevices.getUserMedia) {
-            this.showToast('getUserMedia Not Supported', 'Your browser does not support camera access. Please use the Salesforce Mobile App or manual search.', 'error');
+        if (!mediaDevices?.getUserMedia) {
+            this.showToast('Camera Not Available', 'Camera requires Lightning Web Security or Salesforce Mobile App. Please use manual search.', 'warning');
             console.error('❌ getUserMedia is not available');
             return;
         }
 
+        // Check jsQR library is loaded
         if (!this.jsQRLoaded || !this.jsQRLibrary) {
             this.showToast('Scanner Loading', 'QR code scanner is still loading. Please try again in a moment.', 'info');
             console.warn('⚠️ jsQR library not loaded yet');
             return;
         }
 
+        // Start desktop camera scanner
         this.showCameraScanner = true;
-
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                this.startCameraScanning();
-            });
+            this.startCameraScanning();
         });
     }
 
@@ -306,7 +417,7 @@ export default class SummitEventsQrCheckin extends LightningElement {
             const canvas = this.refs.canvasElement;
 
             if (!video || !canvas) {
-                console.error('Video or canvas element not found');
+                console.error('❌ Video or canvas element not found');
                 return;
             }
 
@@ -316,34 +427,74 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 throw new Error('Camera API not available');
             }
 
+            // Request LOWER resolution for faster QR detection on desktop
             this.videoStream = await mediaDevices.getUserMedia({
-                video: {facingMode: 'environment'}
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 640, max: 640 },
+                    height: { ideal: 480, max: 480 }
+                }
             });
 
             video.srcObject = this.videoStream;
             video.setAttribute('playsinline', true);
             await video.play();
 
-            const canvasContext = canvas.getContext('2d');
+            // Wait for video to be fully ready before starting scan loop
+            await new Promise(resolve => {
+                const checkReady = () => {
+                    if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+                        resolve();
+                    } else {
+                        setTimeout(checkReady, 50);
+                    }
+                };
+                checkReady();
+            });
 
+            // FORCE canvas to 640×480 regardless of camera resolution
+            // This downscales high-res video for much faster QR processing
+            const targetWidth = 640;
+            const targetHeight = 480;
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            console.log(`📹 Camera ready: ${video.videoWidth}×${video.videoHeight} → ${canvas.width}×${canvas.height} canvas`);
+
+            const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
+
+            // Scan once per second for reliable QR detection
             this.scanningInterval = setInterval(() => {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.height = video.videoHeight;
-                    canvas.width = video.videoWidth;
-                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                if (!this.videoStream || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    return; // Skip this scan if video not ready
+                }
 
+                try {
+                    // Draw current video frame to canvas (browser auto-downscales)
+                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
                     const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+
+                    // Scan for QR code
                     const code = this.jsQRLibrary(imageData.data, imageData.width, imageData.height, {
                         inversionAttempts: 'dontInvert'
                     });
 
-                    if (code) {
+                    if (code?.data) {
+                        // QR code detected! Stop scanning immediately
+                        console.log(`✅ QR code found: ${code.data}`);
                         this.qrCodeInput = code.data;
+
+                        // Clean up scanner BEFORE processing to prevent memory leaks
                         this.handleCloseCameraScanner();
+
+                        // Process check-in
                         this.handleCheckIn();
                     }
+                } catch (error) {
+                    console.error('❌ QR scan error:', error);
                 }
-            }, 100);
+            }, 1000); // Scan every 1 second
 
         } catch (error) {
             console.error('Camera access error:', error);
@@ -379,6 +530,17 @@ export default class SummitEventsQrCheckin extends LightningElement {
             this.videoStream.getTracks().forEach(track => track.stop());
             this.videoStream = null;
         }
+    }
+
+
+    scrollToResults() {
+        // Use setTimeout to ensure DOM has updated before scrolling
+        setTimeout(() => {
+            const resultsSection = this.refs.resultsSection;
+            if (resultsSection) {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     }
 
     handleStopSession() {
@@ -452,6 +614,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
                 // Store pending registration for confirmation
                 this.pendingCheckin = result;
                 this.showResult = true;
+
+                // Scroll to results on mobile
+                this.scrollToResults();
 
                 if (result.alreadyCheckedIn) {
                     this.showToast('Already Checked In', `${result.registrantName} was already checked in.`, 'info');
@@ -602,6 +767,9 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
             if (results.length === 0) {
                 this.showToast('No Results', 'No registrations found matching the criteria.', 'info');
+            } else {
+                // Scroll to results on mobile/desktop
+                this.scrollToResults();
             }
 
         } catch (error) {
@@ -711,6 +879,14 @@ export default class SummitEventsQrCheckin extends LightningElement {
 
     get showActiveSessionControls() {
         return this.sessionActive;
+    }
+
+    get isOnInstanceRecordPage() {
+        return this._recordId && this._objectApiName === 'summit__Summit_Events_Instance__c';
+    }
+
+    get showDateInstanceSelection() {
+        return !this.isOnInstanceRecordPage;
     }
 
     get sessionDuration() {

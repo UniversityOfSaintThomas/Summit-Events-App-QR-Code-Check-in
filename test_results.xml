@@ -1,0 +1,33 @@
+<testsuite tests="31">
+  <testcase classname="summitEventsCheckin_TEST" name="setup" time="563" />
+  <testcase classname="summitEventsCheckin_TEST" name="testAlreadyCheckedIn" time="62" />
+  <testcase classname="summitEventsCheckin_TEST" name="testCheckInMissingInstance" time="19" />
+  <testcase classname="summitEventsCheckin_TEST" name="testCheckInWithWrongInstance" time="63" />
+  <testcase classname="summitEventsCheckin_TEST" name="testEmptyQRCode" time="17" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetEventInstancesByDate" time="35" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetEventInstancesByDateNoResults" time="15" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetEventInstancesByDateNull" time="7" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetTotalAttendedCount" time="34" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetTotalAttendedCountEmpty" time="8" />
+  <testcase classname="summitEventsCheckin_TEST" name="testGetTotalAttendedCountNull" time="10" />
+  <testcase classname="summitEventsCheckin_TEST" name="testInvalidQRCode" time="25" />
+  <testcase classname="summitEventsCheckin_TEST" name="testLookupRegistrant" time="47" />
+  <testcase classname="summitEventsCheckin_TEST" name="testLookupRegistrantAlreadyCheckedIn" time="31" />
+  <testcase classname="summitEventsCheckin_TEST" name="testLookupRegistrantEmptyInstance" time="16" />
+  <testcase classname="summitEventsCheckin_TEST" name="testLookupRegistrantEmptyQRCode" time="16" />
+  <testcase classname="summitEventsCheckin_TEST" name="testLookupRegistrantNotFound" time="31" />
+  <testcase classname="summitEventsCheckin_TEST" name="testNullQRCode" time="16" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrations" time="48" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsByEmail" time="37" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsByFirstNameOnly" time="40" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsByLastNameOnly" time="36" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsEmptyInput" time="17" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsInvalidInstance" time="8" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSearchRegistrationsNoResults" time="26" />
+  <testcase classname="summitEventsCheckin_TEST" name="testSuccessfulCheckin" time="94" />
+  <testcase classname="summitEventsCheckin_TEST" name="testUndoCheckIn" time="148" />
+  <testcase classname="summitEventsCheckin_TEST" name="testUndoCheckInEmptyId" time="18" />
+  <testcase classname="summitEventsCheckin_TEST" name="testUndoCheckInEmptyInstance" time="18" />
+  <testcase classname="summitEventsCheckin_TEST" name="testUndoCheckInInvalidId" time="27" />
+  <testcase classname="summitEventsCheckin_TEST" name="testUndoCheckInNotCheckedIn" time="29" />
+</testsuite>

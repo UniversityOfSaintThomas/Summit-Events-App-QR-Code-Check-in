@@ -1,0 +1,15 @@
+{
+  "name": "summit-events-qr-checkin",
+  "version": "2.0.0",
+  "description": "Summit Events QR Check-In Lightning Web Component",
+  "scripts": {
+    "test": "sfdx-lwc-jest",
+    "test:watch": "sfdx-lwc-jest --watch",
+    "test:coverage": "sfdx-lwc-jest --coverage",
+    "test:debug": "sfdx-lwc-jest --debug"
+  },
+  "devDependencies": {
+    "@salesforce/sfdx-lwc-jest": "^3.1.1",
+    "@salesforce/wire-service-jest-util": "^4.1.4"
+  }
+}

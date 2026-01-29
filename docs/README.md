@@ -25,6 +25,8 @@ Complete check-in solution with QR code scanning, manual search, and context-awa
 
 - **[Developer Setup](DEVELOPER-SETUP.md)** - Development environment with CumulusCI
 - **[Architecture](ARCHITECTURE.md)** - Technical architecture and component design
+- **[Unit Test Setup](UNIT-TEST-SETUP.md)** - Jest testing configuration and test suite (LWC)
+- **[Apex Test Coverage](APEX-TEST-COVERAGE.md)** - Apex unit test suite and coverage guide
 
 ### Archive
 

@@ -32,11 +32,11 @@ Follow the installation wizard, then add the component to your Lightning page.
 **For desktop browser camera scanning:**
 
 1. Go to **Setup → Session Settings**
-2. Enable **"Lightning Web Security for Lightning Experience"**
-3. Enable **"Use Lightning Web Security for Lightning components in Experience Builder sites"**
-4. Click **Save**
+2. Enable **"Use Lightning Web Security (LWS) for Lightning components in Experience Builder sites"**
+3. Click **Save**
 
-**Note:** Salesforce Mobile App camera works without this - it uses native scanner!
+**Note 1:** In order for LWS to take effect you may have to clear your browser cache.
+**Note 2:** Salesforce Mobile App camera works without this - it uses native scanner!
 
 See [LWS Enablement Guide](LWS-ENABLEMENT-GUIDE.md) for details.
 
